@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+    <title>Budget App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --ios-bg: #000000;
+            --ios-card: #1c1c1e;
+            --ios-blue: #0a84ff;
+        }
+        body {
+            background-color: var(--ios-bg);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overscroll-behavior: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Hide scrollbars */
+        ::-webkit-scrollbar { display: none; }
+        * { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .safe-top { padding-top: env(safe-area-inset-top); }
+        .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+        
+        .bottom-sheet {
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+        }
+        .bottom-sheet.active { transform: translateY(0); }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        input, select {
+            background: #2c2c2e !important;
+            border: none;
+            color: white;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen overflow-hidden">
+
+    <!-- HEADER -->
+    <header class="safe-top bg-black/80 backdrop-blur-md fixed top-0 w-full z-40 border-b border-white/10">
+        <div class="px-6 py-4 flex justify-between items-center">
+            <h1 id="page-title" class="text-2xl font-bold text-white">Action</h1>
+            <select id="user-switcher" class="bg-[#1c1c1e] text-sm font-medium px-3 py-1 rounded-full border-none focus:ring-0">
+                <option value="Francis">Francis</option>
+                <option value="Mely">Mely</option>
+            </select>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 overflow-y-auto pt-24 pb-32 px-4">
+        
+        <!-- Action Tab -->
+        <div id="view-action" class="tab-content active space-y-4">
+            <div class="bg-[#1c1c1e] p-6 rounded-2xl flex justify-between items-center">
+                <div>
+                    <p class="text-gray-400 text-sm">Monthly Spend</p>
+                    <p class="text-3xl font-bold">$0.00</p>
+                </div>
+                <button onclick="openModal()" class="bg-[#0a84ff] w-12 h-12 rounded-full flex items-center justify-center text-2xl shadow-lg active:scale-95 transition-transform">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Other Tabs (Placeholders) -->
+        <div id="view-terms" class="tab-content text-center pt-20 text-gray-500">Terms View (Coming Soon)</div>
+        <div id="view-fixed" class="tab-content text-center pt-20 text-gray-500">Fixed Bills View (Coming Soon)</div>
+        <div id="view-history" class="tab-content text-center pt-20 text-gray-500">History View (Coming Soon)</div>
+
+    </main>
+
+    <!-- BOTTOM NAVIGATION -->
+    <nav class="safe-bottom bg-[#161618]/90 backdrop-blur-xl fixed bottom-0 w-full border-t border-white/10 z-40">
+        <div class="flex justify-around items-center py-3">
+            <button onclick="switchTab('action', 'Action')" class="tab-btn flex flex-col items-center text-[#0a84ff]" data-tab="action">
+                <i class="fa-solid fa-bolt text-xl"></i>
+                <span class="text-[10px] mt-1">Action</span>
+            </button>
+            <button onclick="switchTab('terms', 'Terms')" class="tab-btn flex flex-col items-center text-gray-500" data-tab="terms">
+                <i class="fa-solid fa-calendar-days text-xl"></i>
+                <span class="text-[10px] mt-1">Terms</span>
+            </button>
+            <button onclick="switchTab('fixed', 'Fixed')" class="tab-btn flex flex-col items-center text-gray-500" data-tab="fixed">
+                <i class="fa-solid fa-layer-group text-xl"></i>
+                <span class="text-[10px] mt-1">Fixed</span>
+            </button>
+            <button onclick="switchTab('history', 'History')" class="tab-btn flex flex-col items-center text-gray-500" data-tab="history">
+                <i class="fa-solid fa-clock-rotate-left text-xl"></i>
+                <span class="text-[10px] mt-1">History</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- BOTTOM SHEET MODAL -->
+    <div id="modal-overlay" onclick="closeModal()" class="fixed inset-0 bg-black/60 opacity-0 pointer-events-none transition-opacity z-50"></div>
+    <div id="bottom-sheet" class="bottom-sheet fixed bottom-0 left-0 right-0 bg-[#1c1c1e] rounded-t-[20px] z-50 max-h-[90vh] overflow-y-auto pb-10">
+        <div class="w-12 h-1.5 bg-gray-600 rounded-full mx-auto my-3"></div>
+        <div class="px-6 py-2">
+            <h2 class="text-xl font-bold mb-6">New Fixed Bill</h2>
+            
+            <form id="budget-form" class="space-y-4">
+                <div>
+                    <label class="text-xs text-gray-400 ml-1 uppercase">Expense Name</label>
+                    <input type="text" id="expenseName" required class="w-full p-4 mt-1 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Netflix, Rent, etc.">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs text-gray-400 ml-1 uppercase">Amount</label>
+                        <input type="number" id="amount" required class="w-full p-4 mt-1 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="text-xs text-gray-400 ml-1 uppercase">Frequency</label>
+                        <select id="frequency" class="w-full p-4 mt-1 outline-none">
+                            <option>Monthly</option>
+                            <option>Yearly</option>
+                            <option>Weekly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-xs text-gray-400 ml-1 uppercase">Due Date</label>
+                    <input type="date" id="dueDate" required class="w-full p-4 mt-1 outline-none">
+                </div>
+
+                <input type="hidden" id="type" value="Fixed">
+
+                <button type="submit" id="submit-btn" class="w-full bg-[#0a84ff] py-4 rounded-xl font-semibold text-lg mt-4 active:scale-95 transition-all flex justify-center items-center">
+                    <span id="btn-text">Save Transaction</span>
+                    <div id="btn-spinner" class="hidden w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSnwEFKUe-eKDFy5Z62Os56G661zVmArYVL7O_ijZr-zh9wsYyoBMQiJE5X2s2jjHV5A/exec";
+
+        // Tab Switching Logic
+        function switchTab(tabId, title) {
+            document.getElementById('page-title').innerText = title;
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.replace('text-[#0a84ff]', 'text-gray-500'));
+            
+            document.getElementById(`view-${tabId}`).classList.add('active');
+            document.querySelector(`[data-tab="${tabId}"]`).classList.replace('text-gray-500', 'text-[#0a84ff]');
+        }
+
+        // Modal Logic
+        function openModal() {
+            document.getElementById('modal-overlay').classList.replace('opacity-0', 'opacity-100');
+            document.getElementById('modal-overlay').classList.replace('pointer-events-none', 'pointer-events-auto');
+            document.getElementById('bottom-sheet').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.replace('opacity-100', 'opacity-0');
+            document.getElementById('modal-overlay').classList.replace('pointer-events-auto', 'pointer-events-none');
+            document.getElementById('bottom-sheet').classList.remove('active');
+        }
+
+        // Form Submission logic
+        document.getElementById('budget-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const btnSpinner = document.getElementById('btn-spinner');
+
+            // Set Loading State
+            submitBtn.disabled = true;
+            btnText.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            const payload = {
+                user: document.getElementById('user-switcher').value,
+                expenseName: document.getElementById('expenseName').value,
+                amount: document.getElementById('amount').value,
+                frequency: document.getElementById('frequency').value,
+                dueDate: document.getElementById('dueDate').value,
+                type: document.getElementById('type').value
+            };
+
+            try {
+                const response = await fetch(SCRIPT_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // Essential for Google Apps Script cross-domain POST
+                    cache: 'no-cache',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                // Reset UI
+                alert('Saved Successfully!');
+                document.getElementById('budget-form').reset();
+                closeModal();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Save failed. Check console.');
+            } finally {
+                // Reset Button
+                submitBtn.disabled = false;
+                btnText.classList.remove('hidden');
+                btnSpinner.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
