@@ -82,6 +82,7 @@
         .toast.show { transform: translateX(-50%) translateY(0); }
 
         .fab-hidden { display: none !important; }
+        .badge { font-size: 9px; font-weight: 800; letter-spacing: 0.06em; color: var(--ios-gray); }
     </style>
 </head>
 <body class="safe-top">
@@ -151,7 +152,10 @@
             <span class="font-bold text-lg">Fixed Expense</span>
             <button onclick="submitFixed()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="input-group"><label>Expense Name</label><input type="text" id="fx-name" autocomplete="off" placeholder="e.g. Rent"></div>
+        <div class="input-group">
+            <label>Expense Name</label>
+            <input type="text" id="fx-label" name="expense-title-1" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" placeholder="e.g. Rent" readonly onfocus="this.removeAttribute('readonly')">
+        </div>
         <div class="input-group"><label>Amount</label><input type="number" id="f-amount" inputmode="decimal" placeholder="0.00"></div>
         <div class="input-group"><label>Frequency</label>
             <select id="f-freq" onchange="toggleDateUI()">
@@ -172,7 +176,10 @@
             <span class="font-bold text-lg">Term Bill</span>
             <button onclick="submitTerm()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="input-group"><label>Expense Name</label><input type="text" id="tr-name" autocomplete="off" placeholder="e.g. Laptop Financing"></div>
+        <div class="input-group">
+            <label>Expense Name</label>
+            <input type="text" id="tr-label" name="expense-title-2" autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false" placeholder="e.g. Laptop Financing" readonly onfocus="this.removeAttribute('readonly')">
+        </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="input-group"><label id="t-balance-label">Balance</label><input type="number" id="t-balance" inputmode="decimal" placeholder="0.00"></div>
             <div class="input-group"><label>Payment</label><input type="number" id="t-amount" inputmode="decimal" placeholder="0.00"></div>
@@ -181,7 +188,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzLRfjrBGI5s23TTrxfeL1M4r4tpgC4kEybqzrZ9FQJLup8C4BhPNUQX0oae_rbY-2RQg/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbyGFPvHJEsxNb-xJQVpuMrGO4xKH8VKrHy008NQtnhNM1V4E_V_7oszs5lDehW_KIAbfw/exec";
         let cache = { action: [], terms: [], fixed: [], history: [] };
         let activeTab = 'action';
         const months = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -193,14 +200,22 @@
             return "$" + v.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
 
+        // Robustly extracts a plain yyyy-MM-dd from either a plain date string
+        // or a full ISO timestamp (e.g. what Sheets sometimes serializes a
+        // Date-typed cell as), then builds a LOCAL date (no timezone shift).
         function parseLocalDate(str) {
-            // Avoid UTC off-by-one: treat "yyyy-MM-dd" as local date
-            const [y, m, d] = String(str).split(/[-T]/)[0].split('-').map(Number);
+            if (!str) return new Date(NaN);
+            const s = String(str);
+            const datePart = s.includes('T') ? s.split('T')[0] : s.slice(0, 10);
+            const [y, m, d] = datePart.split('-').map(Number);
             return new Date(y, m - 1, d);
         }
 
+        function isValidDate(d) { return d instanceof Date && !isNaN(d); }
+
         function dueLabel(dateStr) {
             const d = parseLocalDate(dateStr);
+            if (!isValidDate(d)) return { text: 'DUE DATE UNKNOWN', cls: 'text-gray-500' };
             const today = new Date(); today.setHours(0,0,0,0);
             d.setHours(0,0,0,0);
             const diffDays = Math.round((d - today) / 86400000);
@@ -209,6 +224,12 @@
             if (diffDays === 0) return { text: `DUE TODAY`, cls: 'text-orange-400' };
             if (diffDays <= 3) return { text: `DUE ${dateText} • ${diffDays}D`, cls: 'text-orange-400' };
             return { text: `DUE ${dateText}`, cls: 'text-gray-500' };
+        }
+
+        function freqBadge(item) {
+            if (item.Type === 'Term') return 'TERM';
+            const m = cache.fixed.find(f => f.ID === item.MasterID);
+            return m ? String(m.Frequency).toUpperCase() : '';
         }
 
         function showToast(msg) {
@@ -267,18 +288,19 @@
                 container.innerHTML = items.map(item => {
                     const d = parseLocalDate(item.DueDate);
                     const val = parseFloat(item.Amount) || 0;
-                    if (d.getMonth() === curMonthIdx && d.getFullYear() === curYear) {
+                    if (isValidDate(d) && d.getMonth() === curMonthIdx && d.getFullYear() === curYear) {
                         if (d.getDate() <= 14) s1 += val; else s2 += val;
                     }
                     const label = dueLabel(item.DueDate);
+                    const badge = freqBadge(item);
                     return `<div class="ios-card p-4 flex items-center justify-between" id="row-${item.ID}">
                         <div class="flex items-center space-x-4">
-                            <button onclick="markPaid('${item.ID}')" class="check-btn w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center">
+                            <button onclick="markPaid('${item.ID}')" class="check-btn w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center shrink-0">
                                 <i class="fa-solid fa-check text-[11px] opacity-0"></i>
                             </button>
                             <div>
                                 <p class="font-bold text-[17px] tracking-tight text-white">${escapeHtml(item.Name)}</p>
-                                <p class="text-[11px] font-bold uppercase tracking-widest ${label.cls}">${label.text}</p>
+                                <p class="text-[11px] font-bold uppercase tracking-widest ${label.cls}">${badge ? badge + ' • ' : ''}${label.text}</p>
                             </div>
                         </div>
                         <p class="text-xl font-bold tracking-tight text-white">${fmtMoney(val)}</p>
@@ -414,14 +436,14 @@
             openEntryModal(true);
             if (type === 'fixed') {
                 document.getElementById('f-id').value = id;
-                document.getElementById('fx-name').value = item.Name;
+                document.getElementById('fx-label').value = item.Name;
                 document.getElementById('f-amount').value = item.Amount;
                 document.getElementById('f-freq').value = item.Frequency;
                 toggleDateUI();
                 document.getElementById('f-day').value = item.DueDay;
             } else {
                 document.getElementById('t-id').value = id;
-                document.getElementById('tr-name').value = item.Name;
+                document.getElementById('tr-label').value = item.Name;
                 document.getElementById('t-balance').value = item.RemainingBalance;
                 document.getElementById('t-day').value = item.DueDay;
                 document.getElementById('t-amount').value = item.PaymentAmount;
@@ -470,7 +492,7 @@
 
         async function submitFixed() {
             const id = document.getElementById('f-id').value;
-            const nameEl = document.getElementById('fx-name');
+            const nameEl = document.getElementById('fx-label');
             const amountEl = document.getElementById('f-amount');
             const name = nameEl.value.trim();
             const amount = parseFloat(amountEl.value);
@@ -489,7 +511,7 @@
 
         async function submitTerm() {
             const id = document.getElementById('t-id').value;
-            const nameEl = document.getElementById('tr-name');
+            const nameEl = document.getElementById('tr-label');
             const balanceEl = document.getElementById('t-balance');
             const amountEl = document.getElementById('t-amount');
             const dayEl = document.getElementById('t-day');
