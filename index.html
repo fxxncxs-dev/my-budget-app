@@ -5,25 +5,63 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Budget iOS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #007AFF; --ios-red: #FF3B30; }
-        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; }
-        .ios-card { background: var(--ios-card); border-radius: 14px; overflow: hidden; }
+        :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #0A84FF; --ios-red: #FF453A; --ios-gray: #8E8E93; }
+        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        .ios-card { background: var(--ios-card); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.15, 1, 0.3, 1); z-index: 100; max-height: 90vh; overflow-y: auto; }
+        
+        /* Modernized Bottom Sheet */
+        .bottom-sheet { 
+            position: fixed; bottom: 0; left: 0; right: 0; 
+            background: #1c1c1e; border-top-left-radius: 24px; border-top-right-radius: 24px; 
+            transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
+            z-index: 100; padding: 24px; padding-bottom: calc(40px + env(safe-area-inset-bottom));
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+        }
         .bottom-sheet.active { transform: translateY(0); }
-        .strikethrough { text-decoration: line-through; opacity: 0.3; transform: scale(0.95); transition: 0.5s; }
-        input, select { background: #2c2c2e !important; border: none; color: white; border-radius: 12px; padding: 16px; width: 100%; outline: none; }
+        .sheet-handle { width: 36px; height: 5px; background: #3a3a3c; border-radius: 10px; margin: -10px auto 20px auto; }
+
+        /* Typography & Inputs */
+        input, select { 
+            background: #2c2c2e !important; border: none; color: white; 
+            border-radius: 14px; padding: 18px; width: 100%; outline: none;
+            font-size: 17px;
+        }
+        label { color: var(--ios-gray); font-size: 12px; text-transform: uppercase; font-weight: 600; margin-left: 4px; }
+
+        .strikethrough { text-decoration: line-through; opacity: 0.2; filter: grayscale(1); transition: 0.6s; }
+        
+        /* Modern Minimal Icons */
+        .icon-btn { color: var(--ios-gray); transition: color 0.2s, opacity 0.2s; cursor: pointer; }
+        .icon-btn:active { opacity: 0.5; }
+        .icon-delete:hover { color: var(--ios-red); }
+        .icon-edit:hover { color: var(--ios-blue); }
     </style>
 </head>
-<body class="safe-top">
+<body class="safe-top overflow-x-hidden">
 
-    <header class="p-6 sticky top-0 bg-black/80 backdrop-blur-xl z-40 flex justify-between items-center">
-        <h1 id="view-title" class="text-3xl font-bold">August</h1>
-        <div id="plus-btn" class="hidden">
-            <button onclick="openEntryModal()" class="text-blue-500 text-2xl"><i class="fa-solid fa-plus"></i></button>
+    <header class="px-6 pt-6 pb-2 sticky top-0 bg-black/90 backdrop-blur-xl z-40">
+        <div class="flex justify-between items-center mb-4">
+            <h1 id="view-title" class="text-3xl font-bold tracking-tight">August</h1>
+            <div id="plus-btn" class="hidden">
+                <button onclick="openEntryModal()" class="text-blue-500 text-2xl p-2"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        </div>
+        
+        <!-- Summary Dashboard Tiles -->
+        <div id="dashboard-tiles" class="grid grid-cols-2 gap-3 mb-4 hidden">
+            <div class="ios-card p-4">
+                <p id="tile-1-label" class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">AUG 1/2 DUE:</p>
+                <p id="tile-1-sum" class="text-2xl font-bold tracking-tighter">0</p>
+            </div>
+            <div class="ios-card p-4 border-l-2 border-blue-500/30">
+                <p id="tile-2-label" class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">AUG 2/2 DUE:</p>
+                <p id="tile-2-sum" class="text-2xl font-bold tracking-tighter">0</p>
+            </div>
         </div>
     </header>
 
@@ -31,51 +69,54 @@
         <div id="view-action" class="tab-content active space-y-3"></div>
         <div id="view-terms" class="tab-content space-y-4"></div>
         <div id="view-fixed" class="tab-content space-y-2"></div>
-        <div id="view-history" class="tab-content space-y-3"></div>
+        <div id="view-history" class="tab-content space-y-2"></div>
     </main>
 
-    <nav class="fixed bottom-0 w-full bg-[#161618]/90 backdrop-blur-xl border-t border-white/10 pb-8 pt-3 z-50">
-        <div class="flex justify-around">
-            <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt text-xl"></i><span class="text-[10px] mt-1">Action</span></button>
-            <button onclick="switchTab('terms')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar text-xl"></i><span class="text-[10px] mt-1">Terms</span></button>
-            <button onclick="switchTab('fixed')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl"></i><span class="text-[10px] mt-1">Fixed</span></button>
-            <button onclick="switchTab('history')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">History</span></button>
+    <!-- Bottom Nav -->
+    <nav class="fixed bottom-0 w-full bg-[#161618]/95 backdrop-blur-2xl border-t border-white/5 pb-8 pt-3 z-50">
+        <div class="flex justify-around items-center">
+            <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt-lightning text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Action</span></button>
+            <button onclick="switchTab('terms')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar-days text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Terms</span></button>
+            <button onclick="switchTab('fixed')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Fixed</span></button>
+            <button onclick="switchTab('history')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">History</span></button>
         </div>
     </nav>
 
-    <!-- Modal for Fixed -->
-    <div id="sheet-fixed" class="bottom-sheet p-6">
+    <!-- Fixed Entry Modal -->
+    <div id="sheet-fixed" class="bottom-sheet">
+        <div class="sheet-handle"></div>
         <input type="hidden" id="f-id">
-        <div class="flex justify-between items-center mb-6">
-            <button onclick="closeModal()" class="text-blue-500">Cancel</button>
-            <span class="font-bold">Fixed</span>
-            <button onclick="submitFixed()" class="text-blue-500 font-bold">Save</button>
+        <div class="flex justify-between items-center mb-8">
+            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
+            <span class="font-bold text-lg">Fixed Expense</span>
+            <button onclick="submitFixed()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="space-y-4">
-            <input type="text" id="f-name" placeholder="Expense">
-            <input type="number" id="f-amount" placeholder="Amount">
-            <select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select>
+        <div class="space-y-5">
+            <div><label>Expense</label><input type="text" id="f-name" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Internet, Rent, etc."></div>
+            <div><label>Amount</label><input type="number" id="f-amount" placeholder="0"></div>
+            <div><label>Frequency</label><select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select></div>
             <div id="f-date-container"></div>
-            <input type="text" id="f-note" placeholder="Note">
+            <div><label>Note</label><input type="text" id="f-note" placeholder="Optional"></div>
         </div>
     </div>
 
-    <!-- Modal for Terms -->
-    <div id="sheet-terms" class="bottom-sheet p-6">
+    <!-- Terms Entry Modal -->
+    <div id="sheet-terms" class="bottom-sheet">
+        <div class="sheet-handle"></div>
         <input type="hidden" id="t-id">
-        <div class="flex justify-between items-center mb-6">
-            <button onclick="closeModal()" class="text-blue-500">Cancel</button>
-            <span class="font-bold">Term Bill</span>
-            <button onclick="submitTerm()" class="text-blue-500 font-bold">Save</button>
+        <div class="flex justify-between items-center mb-8">
+            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
+            <span class="font-bold text-lg">Term Bill</span>
+            <button onclick="submitTerm()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="space-y-4">
-            <input type="text" id="t-name" placeholder="Expense">
-            <input type="number" id="t-balance" placeholder="Starting Balance">
-            <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="t-start">
-                <input type="number" id="t-day" placeholder="Due Day">
+        <div class="space-y-5">
+            <div><label>Expense</label><input type="text" id="t-name" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Car Loan, iPhone, etc."></div>
+            <div><label>Starting Balance</label><input type="number" id="t-balance" placeholder="0"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div><label>Start Date</label><input type="date" id="t-start"></div>
+                <div><label>Due Day (1-31)</label><input type="number" id="t-day" placeholder="15"></div>
             </div>
-            <input type="number" id="t-amount" placeholder="Payment Amount">
+            <div><label>Monthly Payment Amount</label><input type="number" id="t-amount" placeholder="0"></div>
         </div>
     </div>
 
@@ -84,6 +125,8 @@
         let db = { action: [], terms: [], fixed: [], history: [] };
         let activeTab = 'action';
 
+        const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
         async function refreshData() {
             const res = await fetch(API_URL);
             db = await res.json();
@@ -91,52 +134,68 @@
         }
 
         function render() {
-            renderAction();
+            const currentMonth = monthNames[new Date().getMonth()];
+            document.getElementById('view-title').innerText = currentMonth === "AUG" ? "August" : monthNames[new Date().getMonth()]; // User asked for August specifically, dynamic is better
+
+            renderAction(currentMonth);
             renderTerms();
             renderFixed();
             renderHistory();
         }
 
-        function renderAction() {
+        function renderAction(month) {
             const container = document.getElementById('view-action');
-            container.innerHTML = db.action.map(item => `
+            const dashboard = document.getElementById('dashboard-tiles');
+            dashboard.classList.remove('hidden');
+
+            let sum1 = 0; let sum2 = 0;
+            
+            // Labels for tiles
+            document.getElementById('tile-1-label').innerText = `${month} 1/2 DUE:`;
+            document.getElementById('tile-2-label').innerText = `${month} 2/2 DUE:`;
+
+            container.innerHTML = db.action.map(item => {
+                const day = parseInt(item.DueDate);
+                const amount = parseFloat(item.Amount) || 0;
+                
+                if (day <= 14) sum1 += amount; else sum2 += amount;
+
+                return `
                 <div class="ios-card p-4 flex items-center justify-between" id="item-${item.ID}">
                     <div class="flex items-center space-x-4">
-                        <button onclick="markPaid('${item.ID}')" class="w-7 h-7 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                            <div class="inner-check w-4 h-4 rounded-full transition-all"></div>
+                        <button onclick="markPaid('${item.ID}')" class="w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center active:scale-90 transition-transform">
+                            <div class="inner-check w-5 h-5 rounded-full transition-all"></div>
                         </button>
                         <div>
-                            <p class="font-bold text-lg">${item.Name}</p>
-                            <p class="text-xs text-gray-500">Due: ${item.DueDate}</p>
+                            <p class="font-bold text-[17px] tracking-tight">${item.Name}</p>
+                            <p class="text-[13px] text-gray-500 font-medium">DUE: ${month} ${item.DueDate}</p>
                         </div>
                     </div>
-                    <p class="text-xl font-medium">${Number(item.Amount).toLocaleString()}</p>
-                </div>
-            `).join('') || '<p class="text-center text-gray-600 py-10">All items paid.</p>';
-        }
+                    <p class="text-xl font-bold tracking-tight">${Number(amount).toLocaleString()}</p>
+                </div>`;
+            }).join('') || '<p class="text-center text-gray-500 py-12">All tasks completed.</p>';
 
-        async function markPaid(id) {
-            const el = document.getElementById(`item-${id}`);
-            el.classList.add('strikethrough');
-            el.querySelector('.inner-check').style.background = '#34C759';
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'completeAction', id: id }) });
-            setTimeout(refreshData, 600);
+            document.getElementById('tile-1-sum').innerText = sum1.toLocaleString();
+            document.getElementById('tile-2-sum').innerText = sum2.toLocaleString();
         }
 
         function renderTerms() {
             const container = document.getElementById('view-terms');
             container.innerHTML = db.terms.map(t => `
                 <div class="ios-card p-5">
-                    <div class="flex justify-between items-start mb-4">
-                        <div><h2 class="text-xl font-bold">${t.Name}</h2><p class="text-xs text-gray-500 uppercase">${t.Frequency}</p></div>
-                        <div class="flex space-x-4">
-                            <button onclick="editMaster('terms', '${t.ID}')" class="text-blue-500"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="confirmDeleteMaster('Terms', '${t.ID}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                    <div class="flex justify-between items-start mb-5">
+                        <div>
+                            <h2 class="text-xl font-bold tracking-tight">${t.Name}</h2>
+                            <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Master Term Plan</p>
+                        </div>
+                        <div class="flex space-x-5 text-gray-400">
+                            <i onclick="editMaster('terms', '${t.ID}')" class="fa-regular fa-pen-to-square text-lg icon-btn icon-edit"></i>
+                            <i onclick="confirmDeleteMaster('Terms', '${t.ID}')" class="fa-regular fa-trash-can text-lg icon-btn icon-delete"></i>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
-                        <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Monthly</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
+                        <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
                     </div>
                 </div>`).join('');
         }
@@ -145,12 +204,15 @@
             const container = document.getElementById('view-fixed');
             container.innerHTML = db.fixed.map(f => `
                 <div class="ios-card p-4 flex justify-between items-center mb-2">
-                    <div><p class="font-bold text-lg">${f.Name}</p><p class="text-xs text-gray-500">${f.Frequency} • Day ${f.DueDay}</p></div>
+                    <div>
+                        <p class="font-bold text-[17px] tracking-tight">${f.Name}</p>
+                        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">${f.Frequency} • Day ${f.DueDay}</p>
+                    </div>
                     <div class="flex items-center space-x-6">
-                        <p class="font-semibold text-lg">${Number(f.Amount).toLocaleString()}</p>
-                        <div class="flex space-x-3">
-                            <button onclick="editMaster('fixed', '${f.ID}')" class="text-blue-500"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="confirmDeleteMaster('Fixed', '${f.ID}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        <p class="font-bold text-[17px] tracking-tight">${Number(f.Amount).toLocaleString()}</p>
+                        <div class="flex space-x-4 text-gray-400">
+                            <i onclick="editMaster('fixed', '${f.ID}')" class="fa-regular fa-pen-to-square text-lg icon-btn icon-edit"></i>
+                            <i onclick="confirmDeleteMaster('Fixed', '${f.ID}')" class="fa-regular fa-trash-can text-lg icon-btn icon-delete"></i>
                         </div>
                     </div>
                 </div>`).join('');
@@ -159,20 +221,31 @@
         function renderHistory() {
             const container = document.getElementById('view-history');
             container.innerHTML = db.history.map(h => `
-                <div class="ios-card p-4 flex items-center justify-between">
-                    <div class="flex items-center space-x-3">
-                        <i class="fa-solid fa-circle-check text-blue-500"></i>
-                        <div><p class="text-gray-400 font-bold">${h.Name}</p><p class="text-[10px] text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
+                <div class="ios-card p-4 flex items-center justify-between opacity-80">
+                    <div class="flex items-center space-x-4">
+                        <i class="fa-solid fa-circle-check text-blue-500 text-xl"></i>
+                        <div>
+                            <p class="text-gray-400 font-semibold tracking-tight">${h.Name}</p>
+                            <p class="text-[11px] text-gray-600 font-bold uppercase tracking-widest">${new Date(h.PaidDate).toLocaleDateString()}</p>
+                        </div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <p class="text-gray-500 font-bold mr-2">${Number(h.Amount).toLocaleString()}</p>
-                        <button onclick="confirmHistoryAction('undoHistory', '${h.ID}')" class="bg-blue-600/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-bold">UNPAID</button>
-                        <button onclick="confirmHistoryAction('deleteHistory', '${h.ID}')" class="text-red-500 px-2"><i class="fa-solid fa-trash-can"></i></button>
+                        <p class="text-gray-500 font-bold mr-2 tracking-tight">${Number(h.Amount).toLocaleString()}</p>
+                        <i onclick="confirmHistoryAction('undoHistory', '${h.ID}')" class="fa-solid fa-rotate-left icon-btn text-lg hover:text-blue-500"></i>
+                        <i onclick="confirmHistoryAction('deleteHistory', '${h.ID}')" class="fa-regular fa-trash-can icon-btn text-lg hover:text-red-500"></i>
                     </div>
                 </div>`).join('');
         }
 
-        // MASTER CRUD LOGIC
+        // Logic functions
+        async function markPaid(id) {
+            const el = document.getElementById(`item-${id}`);
+            el.classList.add('strikethrough');
+            el.querySelector('.inner-check').style.background = '#34C759';
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'completeAction', id: id }) });
+            setTimeout(refreshData, 600);
+        }
+
         function editMaster(type, id) {
             const item = db[type].find(i => i.ID === id);
             openEntryModal(true);
@@ -196,17 +269,14 @@
         }
 
         function confirmDeleteMaster(type, id) {
-            if (confirm(`Are you sure you want to delete this ${type} bill? This will also remove any pending payments in the Action tab.`)) {
+            if (confirm(`Delete this master ${type} bill? Associated pending items will be removed.`)) {
                 callBackend('deleteMaster', { type: type, id: id });
             }
         }
 
-        // HISTORY LOGIC
         function confirmHistoryAction(action, id) {
-            const msg = action === 'deleteHistory' ? "Are you sure you want to delete?" : "Are you sure you want to make this unpaid?";
-            if (confirm(msg)) {
-                callBackend(action, { id: id });
-            }
+            const msg = action === 'deleteHistory' ? "Delete this history record?" : "Move this back to unpaid action list?";
+            if (confirm(msg)) callBackend(action, { id: id });
         }
 
         async function callBackend(action, params) {
@@ -214,7 +284,6 @@
             refreshData();
         }
 
-        // FORM SUBMISSIONS
         async function submitFixed() {
             const id = document.getElementById('f-id').value;
             const data = { name: document.getElementById('f-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value, note: document.getElementById('f-note').value };
@@ -229,21 +298,23 @@
             closeModal();
         }
 
-        // UI HELPERS
         function switchTab(tab) {
             activeTab = tab;
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
             document.getElementById(`view-${tab}`).classList.add('active');
             document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
-            document.getElementById('plus-btn').className = (tab === 'fixed' || tab === 'terms') ? '' : 'hidden';
-            document.getElementById('view-title').innerText = tab === 'action' ? 'August' : tab.charAt(0).toUpperCase() + tab.slice(1);
+            
+            document.getElementById('plus-btn').classList.toggle('hidden', (tab !== 'fixed' && tab !== 'terms'));
+            document.getElementById('dashboard-tiles').classList.toggle('hidden', tab !== 'action');
+            
+            refreshData();
         }
 
         function openEntryModal(isEdit = false) {
             if (!isEdit) {
                 document.getElementById('f-id').value = ""; document.getElementById('t-id').value = "";
-                document.querySelectorAll('input').forEach(i => i.value = "");
+                document.querySelectorAll('.bottom-sheet input').forEach(i => i.value = "");
             }
             document.getElementById(`sheet-${activeTab}`).classList.add('active');
             toggleDateUI();
@@ -255,10 +326,10 @@
             const freq = document.getElementById('f-freq').value;
             const container = document.getElementById('f-date-container');
             if (freq === 'Monthly') {
-                container.innerHTML = `<select id="f-day">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
+                container.innerHTML = `<label>Due Day</label><select id="f-day">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
             } else {
                 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                container.innerHTML = `<select id="f-day">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
+                container.innerHTML = `<label>Day of Week</label><select id="f-day">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
             }
         }
 
