@@ -7,85 +7,91 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --ios-blue: #007AFF; --ios-bg: #000; --ios-card: #1c1c1e; }
-        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, sans-serif; overflow-x: hidden; }
+        :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #007AFF; }
+        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; transition: opacity 0.3s; }
         .ios-card { background: var(--ios-card); border-radius: 14px; overflow: hidden; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .bottom-sheet { transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.15, 1, 0.3, 1); z-index: 100; }
+        .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.15, 1, 0.3, 1); z-index: 100; max-height: 90vh; overflow-y: auto; }
         .bottom-sheet.active { transform: translateY(0); }
-        .strikethrough { text-decoration: line-through; opacity: 0.5; transition: 0.4s; }
+        .strikethrough { text-decoration: line-through; opacity: 0.3; transform: scale(0.95); transition: 0.5s; }
         
-        /* Swipe Styles */
-        .swipe-container { position: relative; overflow: hidden; touch-action: pan-y; }
-        .swipe-content { position: relative; z-index: 10; transition: transform 0.3s ease; background: var(--ios-card); }
-        .action-blue { background: #007AFF; left: 0; }
-        .action-red { background: #FF3B30; right: 0; }
-        .swipe-bg { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; align-items: center; padding: 0 20px; font-weight: bold; font-size: 13px; }
+        /* Swipe styles */
+        .swipe-item { position: relative; touch-action: pan-y; overflow: hidden; border-radius: 14px; margin-bottom: 8px; }
+        .swipe-content { position: relative; z-index: 2; transition: transform 0.3s; background: var(--ios-card); }
+        .swipe-bg { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; align-items: center; px: 20px; font-weight: bold; }
+        .bg-undo { background: var(--ios-blue); color: white; justify-content: flex-start; padding-left: 20px; }
+        .bg-delete { background: #ff3b30; color: white; justify-content: flex-end; padding-right: 20px; }
     </style>
 </head>
 <body class="safe-top">
 
-    <header class="p-6 sticky top-0 bg-black/80 backdrop-blur-lg z-40 flex justify-between items-center">
-        <h1 id="page-title" class="text-3xl font-bold">August</h1>
-        <div id="header-plus" class="hidden">
-            <button onclick="openEntryModal()" class="text-blue-500 text-2xl"><i class="fa-solid fa-plus"></i></button>
+    <header class="p-6 sticky top-0 bg-black/80 backdrop-blur-xl z-40 flex justify-between items-center">
+        <h1 id="view-title" class="text-3xl font-bold">August</h1>
+        <div id="plus-btn" class="hidden">
+            <button onclick="openModal()" class="text-blue-500 text-2xl"><i class="fa-solid fa-plus"></i></button>
         </div>
     </header>
 
-    <main class="px-4 pb-32">
+    <main id="app" class="px-4 pb-32">
         <div id="view-action" class="tab-content active space-y-3"></div>
         <div id="view-terms" class="tab-content space-y-4"></div>
         <div id="view-fixed" class="tab-content space-y-2"></div>
-        <div id="view-history" class="tab-content space-y-2"></div>
+        <div id="view-history" class="tab-content"></div>
     </main>
 
-    <!-- Bottom Nav -->
+    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-[#161618]/90 backdrop-blur-xl border-t border-white/10 pb-8 pt-3 z-50">
         <div class="flex justify-around">
-            <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action">
-                <i class="fa-solid fa-bolt text-xl"></i><span class="text-[10px] mt-1">Action</span>
-            </button>
-            <button onclick="switchTab('terms')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="terms">
-                <i class="fa-solid fa-calendar text-xl"></i><span class="text-[10px] mt-1">Terms</span>
-            </button>
-            <button onclick="switchTab('fixed')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="fixed">
-                <i class="fa-solid fa-layer-group text-xl"></i><span class="text-[10px] mt-1">Fixed</span>
-            </button>
-            <button onclick="switchTab('history')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="history">
-                <i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">History</span>
-            </button>
+            <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt text-xl"></i><span class="text-[10px] mt-1">Action</span></button>
+            <button onclick="switchTab('terms')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar text-xl"></i><span class="text-[10px] mt-1">Terms</span></button>
+            <button onclick="switchTab('fixed')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl"></i><span class="text-[10px] mt-1">Fixed</span></button>
+            <button onclick="switchTab('history')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock text-xl"></i><span class="text-[10px] mt-1">History</span></button>
         </div>
     </nav>
 
-    <!-- Fixed Form -->
-    <div id="modal-fixed" class="bottom-sheet fixed bottom-0 left-0 right-0 ios-card rounded-t-[20px] p-6 pb-12">
+    <!-- Modal Sheets -->
+    <div id="sheet-fixed" class="bottom-sheet p-6">
         <div class="flex justify-between items-center mb-6">
             <button onclick="closeModal()" class="text-blue-500">Cancel</button>
-            <span class="font-bold">Fixed</span>
-            <button onclick="saveFixed()" class="text-blue-500 font-bold">Save</button>
+            <span class="font-bold">Fixed Bill</span>
+            <button onclick="submitFixed()" class="text-blue-500 font-bold">Save</button>
         </div>
         <div class="space-y-4">
-            <input type="text" id="f-type" placeholder="Type (e.g. Note)" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-            <input type="text" id="f-name" placeholder="Expense" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <input type="text" id="f-name" placeholder="Expense Name" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
             <input type="number" id="f-amount" placeholder="Amount" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-            <select id="f-freq" onchange="updateFixedDateUI()" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-                <option>Monthly</option><option>Weekly</option>
-            </select>
-            <div id="f-date-box"></div>
+            <select id="f-freq" onchange="toggleDateUI()" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none"><option>Monthly</option><option>Weekly</option></select>
+            <div id="f-date-container"></div>
+            <input type="text" id="f-note" placeholder="Note" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+        </div>
+    </div>
+
+    <div id="sheet-terms" class="bottom-sheet p-6">
+        <div class="flex justify-between items-center mb-6">
+            <button onclick="closeModal()" class="text-blue-500">Cancel</button>
+            <span class="font-bold">New Term</span>
+            <button onclick="submitTerm()" class="text-blue-500 font-bold">Save</button>
+        </div>
+        <div class="space-y-4">
+            <input type="text" id="t-name" placeholder="Expense Name" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <input type="number" id="t-balance" placeholder="Starting Balance" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <div class="grid grid-cols-2 gap-3">
+                <input type="date" id="t-start" class="bg-[#2c2c2e] p-4 rounded-xl outline-none">
+                <input type="number" id="t-day" placeholder="Due Day" class="bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            </div>
+            <input type="number" id="t-amount" placeholder="Payment Amount" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzaY4W0s3OTKqhGI7uLuSvuXqSkyCejDfeQBqVEN80FyK5LfAg-z6yeh6wTjEnHufsEzA/exec"; // REPLACE THIS
+        const API_URL = "https://script.google.com/macros/s/AKfycbxJcbFW4sdWpCwDvmDmeDRn4krp5_qLVutC_Ui46RdcTmeT-NTaJ47STkG9xaU50beGkw/exec"; 
         let db = { action: [], terms: [], fixed: [], history: [] };
+        let activeTab = 'action';
 
-        async function loadData() {
-            try {
-                const res = await fetch(API_URL);
-                db = await res.json();
-                render();
-            } catch (e) { console.log("Load failed"); }
+        async function refreshData() {
+            const res = await fetch(API_URL);
+            db = await res.json();
+            render();
         }
 
         function render() {
@@ -97,138 +103,136 @@
 
         function renderAction() {
             const container = document.getElementById('view-action');
-            if (db.action.length === 0) { container.innerHTML = '<p class="text-center py-10 text-gray-500">All paid!</p>'; return; }
-            
             container.innerHTML = db.action.map(item => `
-                <div class="ios-card p-4 flex items-center justify-between" id="card-${item.Timestamp}">
+                <div class="ios-card p-4 flex items-center justify-between" id="item-${item.ID}">
                     <div class="flex items-center space-x-4">
-                        <button onclick="markActionPaid('${item.Timestamp}')" class="w-7 h-7 rounded-full border-2 border-gray-600 flex items-center justify-center">
-                            <div class="check-inner w-4 h-4 rounded-full"></div>
+                        <button onclick="markPaid('${item.ID}')" class="w-7 h-7 rounded-full border-2 border-gray-600 flex items-center justify-center">
+                            <div class="inner-check w-4 h-4 rounded-full transition-all"></div>
                         </button>
                         <div>
-                            <p class="font-bold text-lg name-label">${item.Name}</p>
-                            <p class="text-xs text-gray-500">Due: ${item.DueDate}</p>
+                            <p class="font-bold text-lg">${item.Name}</p>
+                            <p class="text-xs text-gray-500 italic">Due: ${item.DueDate}</p>
                         </div>
                     </div>
                     <p class="text-xl font-medium">${Number(item.Amount).toLocaleString()}</p>
                 </div>
-            `).join('');
+            `).join('') || '<p class="text-center text-gray-600 py-10">Clear!</p>';
         }
 
-        async function markActionPaid(ts) {
-            const item = db.action.find(i => i.Timestamp == ts);
-            const card = document.getElementById(`card-${ts}`);
-            card.querySelector('.name-label').classList.add('strikethrough');
-            card.querySelector('.check-inner').style.background = '#34C759';
-
-            await fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: 'completeAction', item: item })
-            });
-            setTimeout(loadData, 600);
-        }
-
-        // Swipe logic for History
-        let touchStartX = 0;
-        function handleSwipe(e, ts) {
-            const touch = e.changedTouches[0];
-            const diff = touch.clientX - touchStartX;
-            const content = e.currentTarget.querySelector('.swipe-content');
+        async function markPaid(id) {
+            const el = document.getElementById(`item-${id}`);
+            el.classList.add('strikethrough');
+            el.querySelector('.inner-check').style.background = '#34C759';
             
-            if (diff > 100) { // Swipe Right -> Unpaid
-                content.style.transform = "translateX(100%)";
-                confirmAction('undoHistory', ts);
-            } else if (diff < -100) { // Swipe Left -> Delete
-                content.style.transform = "translateX(-100%)";
-                if(confirm("Delete permanently?")) confirmAction('deleteHistory', ts);
-                else content.style.transform = "translateX(0)";
-            } else {
-                content.style.transform = "translateX(0)";
-            }
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'completeAction', id: id }) });
+            setTimeout(refreshData, 600);
         }
 
-        async function confirmAction(type, ts) {
-            await fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                body: JSON.stringify({ action: type, timestamp: ts })
-            });
-            loadData();
+        function renderTerms() {
+            const container = document.getElementById('view-terms');
+            container.innerHTML = db.terms.map(t => {
+                const remTerm = Math.ceil(t.RemainingBalance / t.PaymentAmount);
+                return `
+                <div class="ios-card p-5 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-bold">${t.Name}</h2>
+                        <span class="text-blue-500 font-bold text-xs uppercase">${t.Frequency}</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
+                        <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
+                        <div class="bg-white/5 p-3 rounded-xl col-span-2 text-center"><p class="text-[10px] text-gray-500 uppercase">Remaining Terms</p><p class="text-lg font-bold">${remTerm} Months</p></div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderFixed() {
+            const container = document.getElementById('view-fixed');
+            container.innerHTML = db.fixed.map(f => `
+                <div class="flex justify-between items-center py-4 border-b border-white/5">
+                    <div><p class="font-bold">${f.Name}</p><p class="text-xs text-gray-500">${f.Frequency} • ${f.DueDay}</p></div>
+                    <p class="font-semibold text-lg">${Number(f.Amount).toLocaleString()}</p>
+                </div>
+            `).join('');
         }
 
         function renderHistory() {
             const container = document.getElementById('view-history');
-            container.innerHTML = db.history.map(item => `
-                <div class="swipe-container ios-card mb-2" ontouchstart="touchStartX = event.touches[0].clientX" ontouchend="handleSwipe(event, '${item.ID}')">
-                    <div class="swipe-bg action-blue">Mark Unpaid</div>
-                    <div class="swipe-bg action-red justify-end">Delete</div>
+            container.innerHTML = db.history.map(h => `
+                <div class="swipe-item" ontouchstart="startSwipe(event)" ontouchend="endSwipe(event, '${h.ID}')">
+                    <div class="swipe-bg bg-undo">Mark Unpaid</div>
+                    <div class="swipe-bg bg-delete">Delete</div>
                     <div class="swipe-content p-4 flex items-center justify-between">
-                        <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-3">
                             <i class="fa-solid fa-circle-check text-blue-500"></i>
-                            <div>
-                                <p class="text-gray-400 font-bold">${item.Name}</p>
-                                <p class="text-[10px] text-gray-600 uppercase">${item.CompletionDate}</p>
-                            </div>
+                            <div><p class="text-gray-400 font-bold">${h.Name}</p><p class="text-[10px] text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
                         </div>
-                        <p class="text-gray-500 font-bold">${Number(item.Amount).toLocaleString()}</p>
+                        <p class="text-gray-500 font-bold">${Number(h.Amount).toLocaleString()}</p>
                     </div>
                 </div>
             `).join('');
         }
 
-        // Standard SPA Nav
-        function switchTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
-            
-            document.getElementById(`view-${tab}`).classList.add('active');
-            document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
-            
-            document.getElementById('header-plus').classList.toggle('hidden', tab !== 'fixed' && tab !== 'terms');
-            document.getElementById('page-title').innerText = tab.charAt(0).toUpperCase() + tab.slice(1);
-            if(tab === 'action') document.getElementById('page-title').innerText = 'August';
-        }
-
-        function openEntryModal() {
-            document.getElementById('modal-fixed').classList.add('active');
-            updateFixedDateUI();
-        }
-
-        function closeModal() {
-            document.querySelectorAll('.bottom-sheet').forEach(m => m.classList.remove('active'));
-        }
-
-        function updateFixedDateUI() {
-            const freq = document.getElementById('f-freq').value;
-            const container = document.getElementById('f-date-box');
-            if(freq === 'Monthly') {
-                container.innerHTML = `<select id="f-date" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-                    ${Array.from({length:31}, (_,i) => `<option>${i+1}</option>`).join('')}
-                </select>`;
-            } else {
-                const days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
-                container.innerHTML = `<select id="f-date" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-                    ${days.map(d => `<option>${d}</option>`).join('')}
-                </select>`;
+        // Swipe Logic
+        let touchStart = 0;
+        function startSwipe(e) { touchStart = e.touches[0].clientX; }
+        async function endSwipe(e, id) {
+            const diff = e.changedTouches[0].clientX - touchStart;
+            const content = e.currentTarget.querySelector('.swipe-content');
+            if (diff > 100) { 
+                content.style.transform = "translateX(100%)";
+                await callBackend('undoHistory', id);
+            } else if (diff < -100) {
+                if (confirm("Delete this record?")) {
+                    content.style.transform = "translateX(-100%)";
+                    await callBackend('deleteHistory', id);
+                }
             }
         }
 
-        async function saveFixed() {
-            const payload = {
-                action: 'addFixed',
-                type: document.getElementById('f-type').value,
-                name: document.getElementById('f-name').value,
-                amount: document.getElementById('f-amount').value,
-                freq: document.getElementById('f-freq').value,
-                date: document.getElementById('f-date').value
-            };
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            closeModal();
-            loadData();
+        async function callBackend(action, id) {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, id: id }) });
+            refreshData();
         }
 
-        window.onload = loadData;
+        function switchTab(tab) {
+            activeTab = tab;
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
+            document.getElementById(`view-${tab}`).classList.add('active');
+            document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
+            document.getElementById('plus-btn').className = (tab === 'fixed' || tab === 'terms') ? '' : 'hidden';
+            document.getElementById('view-title').innerText = tab === 'action' ? 'August' : tab.charAt(0).toUpperCase() + tab.slice(1);
+        }
+
+        function openModal() { document.getElementById(`sheet-${activeTab}`).classList.add('active'); toggleDateUI(); }
+        function closeModal() { document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active')); }
+
+        function toggleDateUI() {
+            const freq = document.getElementById('f-freq').value;
+            const container = document.getElementById('f-date-container');
+            if (freq === 'Monthly') {
+                container.innerHTML = `<select id="f-day" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
+            } else {
+                const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                container.innerHTML = `<select id="f-day" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
+            }
+        }
+
+        async function submitFixed() {
+            const data = { name: document.getElementById('f-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value, note: document.getElementById('f-note').value };
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addFixed', data: data }) });
+            closeModal(); refreshData();
+        }
+
+        async function submitTerm() {
+            const data = { name: document.getElementById('t-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addTerm', data: data }) });
+            closeModal(); refreshData();
+        }
+
+        window.onload = refreshData;
     </script>
 </body>
 </html>
