@@ -9,20 +9,20 @@
     <style>
         :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #0A84FF; --ios-red: #FF453A; --ios-gray: #8E8E93; }
         
-        /* Mobile-First Base */
         body { 
             background: var(--ios-bg); 
             color: #fff; 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, system-ui, sans-serif;
             -webkit-font-smoothing: antialiased;
             overscroll-behavior-y: contain;
         }
-        
+
+        /* Centered & Proportional UI */
         .ios-card { background: var(--ios-card); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Optimized Bottom Sheet */
+        /* Modern Bottom Sheet */
         .bottom-sheet { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             background: #1c1c1e; border-top-left-radius: 28px; border-top-right-radius: 28px; 
@@ -33,33 +33,34 @@
         .bottom-sheet.active { transform: translateY(0); }
         .sheet-handle { width: 40px; height: 5px; background: #3a3a3c; border-radius: 10px; margin: -10px auto 25px auto; }
 
-        /* Balanced Proportional Inputs */
-        .input-group { margin-bottom: 20px; }
+        /* Balanced Centered Inputs */
+        .input-group { margin-bottom: 18px; text-align: center; }
         .input-group label { 
             display: block; color: var(--ios-gray); font-size: 11px; 
-            text-transform: uppercase; font-weight: 700; margin-bottom: 8px; margin-left: 4px;
+            text-transform: uppercase; font-weight: 700; margin-bottom: 8px;
             letter-spacing: 0.05em;
         }
         input, select { 
             background: #2c2c2e !important; border: none; color: white; 
-            border-radius: 16px; padding: 16px 20px; width: 100%; outline: none;
-            font-size: 17px; height: 58px; /* Proportional balanced height */
+            border-radius: 16px; width: 100%; outline: none;
+            font-size: 17px; height: 58px; text-align: center; /* Centered Text */
             appearance: none; -webkit-appearance: none;
         }
+        input::placeholder { color: #636366; }
 
         /* Prevent Auto-fill Background */
         input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #2c2c2e inset !important; -webkit-text-fill-color: white !important; }
 
-        .strikethrough { opacity: 0.1; filter: grayscale(1); transform: scale(0.98); pointer-events: none; transition: 0.4s; }
+        .strikethrough { opacity: 0.1; filter: grayscale(1); transform: scale(0.98); pointer-events: none; transition: 0.6s; }
         
-        /* Loading Spinner */
-        #loader { transition: opacity 0.3s; pointer-events: none; }
+        .icon-btn { color: var(--ios-gray); transition: all 0.2s; cursor: pointer; }
+        .icon-btn:active { transform: scale(0.85); opacity: 0.6; }
     </style>
 </head>
 <body class="safe-top overflow-x-hidden">
 
-    <!-- Loading Indicator -->
-    <div id="loader" class="fixed top-4 right-6 z-[60] opacity-0">
+    <!-- Sync Spinner -->
+    <div id="loader" class="fixed top-6 right-6 z-[60] opacity-0 transition-opacity">
         <i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
     </div>
 
@@ -67,20 +68,18 @@
         <div class="flex justify-between items-center mb-4">
             <h1 id="view-title" class="text-3xl font-bold tracking-tight">August</h1>
             <div id="plus-btn" class="hidden">
-                <button onclick="openEntryModal()" class="text-blue-500 text-2xl p-2 active:scale-90 transition-transform">
-                    <i class="fa-solid fa-plus"></i>
-                </button>
+                <button onclick="openEntryModal()" class="text-blue-500 text-2xl p-2"><i class="fa-solid fa-plus"></i></button>
             </div>
         </div>
         
-        <!-- Bento Dashboard (Only for Action Tab) -->
+        <!-- Bento Dashboard (Action Tab Only) -->
         <div id="dashboard-tiles" class="grid grid-cols-2 gap-3 mb-4">
             <div class="ios-card p-4">
-                <p id="tile-1-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 1/2:</p>
+                <p id="tile-1-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 1/2 DUE:</p>
                 <p id="tile-1-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
             <div class="ios-card p-4">
-                <p id="tile-2-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 2/2:</p>
+                <p id="tile-2-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 2/2 DUE:</p>
                 <p id="tile-2-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
         </div>
@@ -93,7 +92,7 @@
         <div id="view-history" class="tab-content space-y-2"></div>
     </main>
 
-    <!-- Bottom Nav -->
+    <!-- Navigation -->
     <nav class="fixed bottom-0 w-full bg-[#161618]/95 backdrop-blur-2xl border-t border-white/5 pb-8 pt-3 z-50">
         <div class="flex justify-around items-center max-w-md mx-auto">
             <button onclick="switchTab('action')" class="nav-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt-lightning text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Action</span></button>
@@ -103,18 +102,18 @@
         </div>
     </nav>
 
-    <!-- Modal for Fixed -->
+    <!-- Fixed Sheet -->
     <div id="sheet-fixed" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="f-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
+            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
             <span class="font-bold text-lg">Fixed</span>
             <button onclick="submitFixed()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
         <div class="input-group">
             <label>Expense</label>
-            <input type="text" id="x-fx-name" name="x-fx-name" autocomplete="one-time-code" placeholder="Rent, Internet...">
+            <input type="text" id="fx-name" autocomplete="one-time-code" placeholder="Rent, Internet...">
         </div>
         <div class="input-group">
             <label>Amount</label>
@@ -125,24 +124,24 @@
             <select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select>
         </div>
         <div id="f-date-container" class="input-group"></div>
-    </div>
+    </header>
 
-    <!-- Modal for Terms -->
+    <!-- Terms Sheet -->
     <div id="sheet-terms" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="t-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
-            <span class="font-bold text-lg">Term</span>
+            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
+            <span class="font-bold text-lg">Term Bill</span>
             <button onclick="submitTerm()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
         <div class="input-group">
             <label>Expense</label>
-            <input type="text" id="x-tr-name" name="x-tr-name" autocomplete="one-time-code" placeholder="Car, iPhone...">
+            <input type="text" id="tr-name" autocomplete="one-time-code" placeholder="Loan, Financing...">
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="input-group"><label>Balance</label><input type="number" id="t-balance" placeholder="0"></div>
-            <div class="input-group"><label>Monthly Payment</label><input type="number" id="t-amount" placeholder="0"></div>
+            <div class="input-group"><label>Payment</label><input type="number" id="t-amount" placeholder="0"></div>
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="input-group"><label>Start Date</label><input type="date" id="t-start"></div>
@@ -151,8 +150,9 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbwwfFvCNp75C0bAcSznb7m_rb7fJfaPmXqOhZ61ZygWWh_FO-Xtb5swFeGm9CkxI9uPVA/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbxrYGY7A9ZvJUh9hiONtwilu7ZDr7Z8ePDYt3RZ0HbmKITm06EpfoO3p4UIQT1syi_6dg/exec"; 
         let cache = { action: [], terms: [], fixed: [], history: [] };
+        let activeTab = 'action';
         const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
         async function fetchData(force = true) {
@@ -166,18 +166,20 @@
         }
 
         function render() {
-            const curMonthIdx = new Date().getMonth();
-            const curMonth = months[curMonthIdx];
+            const today = new Date();
+            const curMonth = months[today.getMonth()];
             
-            // Bento logic
-            if (document.getElementById('view-action').classList.contains('active')) {
-                document.getElementById('dashboard-tiles').style.display = "grid";
-                document.getElementById('view-title').innerText = "August"; // As requested
+            // Bento visibility logic
+            const dashboard = document.getElementById('dashboard-tiles');
+            if (activeTab === 'action') {
+                dashboard.style.display = "grid";
+                document.getElementById('view-title').innerText = "August";
+                renderAction(curMonth);
             } else {
-                document.getElementById('dashboard-tiles').style.display = "none";
+                dashboard.style.display = "none";
+                document.getElementById('view-title').innerText = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
             }
 
-            renderAction(curMonth);
             renderTerms();
             renderFixed();
             renderHistory();
@@ -188,7 +190,7 @@
             let s1 = 0; let s2 = 0;
 
             container.innerHTML = cache.action.map(item => {
-                const day = parseInt(item.DueDate) || 0;
+                const day = parseInt(item.DueDate) || parseInt(item.DueDay) || 0;
                 const val = parseFloat(item.Amount) || 0;
                 if (day <= 14) s1 += val; else s2 += val;
 
@@ -205,10 +207,10 @@
                     </div>
                     <p class="text-xl font-bold tracking-tight">${val.toLocaleString()}</p>
                 </div>`;
-            }).join('') || '<p class="text-center text-gray-500 py-12">All Clear</p>';
+            }).join('') || '<p class="text-center text-gray-600 py-12">No active bills</p>';
 
-            document.getElementById('tile-1-label').innerText = `${m} 1/2:`;
-            document.getElementById('tile-2-label').innerText = `${m} 2/2:`;
+            document.getElementById('tile-1-label').innerText = `${m} 1/2 DUE:`;
+            document.getElementById('tile-2-label').innerText = `${m} 2/2 DUE:`;
             document.getElementById('tile-1-sum').innerText = s1.toLocaleString();
             document.getElementById('tile-2-sum').innerText = s2.toLocaleString();
         }
@@ -217,15 +219,15 @@
             document.getElementById('view-terms').innerHTML = cache.terms.map(t => `
                 <div class="ios-card p-5">
                     <div class="flex justify-between items-start mb-4">
-                        <h2 class="text-xl font-bold">${t.Name}</h2>
-                        <div class="flex space-x-4 text-gray-500">
-                            <i onclick="editMaster('terms', '${t.ID}')" class="fa-regular fa-pen-to-square text-lg"></i>
-                            <i onclick="op('deleteMaster', {type:'Terms', id:'${t.ID}'})" class="fa-regular fa-trash-can text-lg"></i>
+                        <h2 class="text-xl font-bold tracking-tight">${t.Name}</h2>
+                        <div class="flex space-x-5 text-gray-500">
+                            <i onclick="editMaster('terms', '${t.ID}')" class="fa-regular fa-pen-to-square text-lg icon-btn"></i>
+                            <i onclick="op('deleteMaster', {type:'Terms', id:'${t.ID}'})" class="fa-regular fa-trash-can text-lg icon-btn"></i>
                         </div>
                     </div>
                     <div class="grid grid-cols-2 gap-3 text-center">
-                        <div class="bg-white/5 py-3 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
-                        <div class="bg-white/5 py-3 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
+                        <div class="bg-white/5 py-4 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
+                        <div class="bg-white/5 py-4 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase mb-1">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
                     </div>
                 </div>`).join('');
         }
@@ -233,11 +235,11 @@
         function renderFixed() {
             document.getElementById('view-fixed').innerHTML = cache.fixed.map(f => `
                 <div class="ios-card p-4 flex justify-between items-center mb-2">
-                    <div><p class="font-bold">${f.Name}</p><p class="text-[10px] text-gray-500 font-bold uppercase">${f.Frequency} • DAY ${f.DueDay}</p></div>
-                    <div class="flex items-center space-x-4">
-                        <p class="font-bold">${Number(f.Amount).toLocaleString()}</p>
-                        <i onclick="editMaster('fixed', '${f.ID}')" class="fa-regular fa-pen-to-square text-gray-500"></i>
-                        <i onclick="op('deleteMaster', {type:'Fixed', id:'${f.ID}'})" class="fa-regular fa-trash-can text-gray-500"></i>
+                    <div><p class="font-bold text-[17px] tracking-tight">${f.Name}</p><p class="text-[10px] text-gray-500 font-bold uppercase tracking-tighter">${f.Frequency} • DAY ${f.DueDay}</p></div>
+                    <div class="flex items-center space-x-5">
+                        <p class="font-bold text-[17px]">${Number(f.Amount).toLocaleString()}</p>
+                        <i onclick="editMaster('fixed', '${f.ID}')" class="fa-regular fa-pen-to-square text-gray-500 icon-btn"></i>
+                        <i onclick="op('deleteMaster', {type:'Fixed', id:'${f.ID}'})" class="fa-regular fa-trash-can text-gray-500 icon-btn"></i>
                     </div>
                 </div>`).join('');
         }
@@ -245,23 +247,24 @@
         function renderHistory() {
             document.getElementById('view-history').innerHTML = cache.history.map(h => `
                 <div class="ios-card p-4 flex items-center justify-between opacity-60">
-                    <div class="flex items-center space-x-3">
-                        <i class="fa-solid fa-circle-check text-blue-500 text-lg"></i>
-                        <div><p class="font-bold text-gray-300">${h.Name}</p><p class="text-[9px] font-bold text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
-                    </div>
                     <div class="flex items-center space-x-4">
-                        <p class="font-bold text-gray-400">${Number(h.Amount).toLocaleString()}</p>
-                        <i onclick="op('undoHistory', {id:'${h.ID}'})" class="fa-solid fa-rotate-left text-gray-500"></i>
-                        <i onclick="op('deleteHistory', {id:'${h.ID}'})" class="fa-regular fa-trash-can text-gray-500"></i>
+                        <i class="fa-solid fa-circle-check text-blue-500 text-lg"></i>
+                        <div><p class="font-bold text-gray-300 tracking-tight">${h.Name}</p><p class="text-[9px] font-bold text-gray-600 uppercase">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
+                    </div>
+                    <div class="flex items-center space-x-6">
+                        <p class="font-bold text-gray-400 tracking-tight">${Number(h.Amount).toLocaleString()}</p>
+                        <i onclick="op('undoHistory', {id:'${h.ID}'})" class="fa-solid fa-rotate-left text-gray-500 icon-btn"></i>
+                        <i onclick="op('deleteHistory', {id:'${h.ID}'})" class="fa-regular fa-trash-can text-gray-500 icon-btn"></i>
                     </div>
                 </div>`).join('');
         }
 
         async function op(action, params) {
             if (action.includes('delete') && !confirm('Confirm Delete?')) return;
+            if (action.includes('undoHistory') && !confirm('Revert this to Unpaid?')) return;
             document.getElementById('loader').style.opacity = "1";
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action, ...params }) });
-            fetchData();
+            setTimeout(() => fetchData(true), 800);
         }
 
         async function markPaid(id) {
@@ -269,39 +272,14 @@
             op('completeAction', { id });
         }
 
-        function editMaster(type, id) {
-            const item = cache[type].find(i => i.ID === id);
-            openEntryModal(true);
-            if (type === 'fixed') {
-                document.getElementById('f-id').value = id;
-                document.getElementById('x-fx-name').value = item.Name;
-                document.getElementById('f-amount').value = item.Amount;
-                document.getElementById('f-freq').value = item.Frequency;
-                toggleDateUI();
-                document.getElementById('f-day').value = item.DueDay;
-            } else {
-                document.getElementById('t-id').value = id;
-                document.getElementById('x-tr-name').value = item.Name;
-                document.getElementById('t-balance').value = item.RemainingBalance;
-                document.getElementById('t-start').value = new Date(item.StartDate).toISOString().split('T')[0];
-                document.getElementById('t-day').value = item.DueDay;
-                document.getElementById('t-amount').value = item.PaymentAmount;
-            }
-        }
-
         function switchTab(tab) {
             activeTab = tab;
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
-            
-            const content = document.getElementById(`view-${tab}`);
-            content.classList.add('active');
+            document.getElementById(`view-${tab}`).classList.add('active');
             document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
-            
             document.getElementById('plus-btn').classList.toggle('hidden', tab !== 'fixed' && tab !== 'terms');
-            document.getElementById('view-title').innerText = tab === 'action' ? 'August' : tab.charAt(0).toUpperCase() + tab.slice(1);
-            
-            render(); // Fast switch from cache
+            render();
         }
 
         function openEntryModal(isEdit = false) {
@@ -311,6 +289,26 @@
             }
             document.getElementById(`sheet-${activeTab}`).classList.add('active');
             toggleDateUI();
+        }
+
+        function editMaster(type, id) {
+            const item = cache[type].find(i => i.ID === id);
+            openEntryModal(true);
+            if (type === 'fixed') {
+                document.getElementById('f-id').value = id;
+                document.getElementById('fx-name').value = item.Name;
+                document.getElementById('f-amount').value = item.Amount;
+                document.getElementById('f-freq').value = item.Frequency;
+                toggleDateUI();
+                document.getElementById('f-day').value = item.DueDay;
+            } else {
+                document.getElementById('t-id').value = id;
+                document.getElementById('tr-name').value = item.Name;
+                document.getElementById('t-balance').value = item.RemainingBalance;
+                document.getElementById('t-start').value = new Date(item.StartDate).toISOString().split('T')[0];
+                document.getElementById('t-day').value = item.DueDay;
+                document.getElementById('t-amount').value = item.PaymentAmount;
+            }
         }
 
         function closeModal() { document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active')); }
@@ -327,14 +325,14 @@
 
         async function submitFixed() {
             const id = document.getElementById('f-id').value;
-            const data = { name: document.getElementById('x-fx-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value };
+            const data = { name: document.getElementById('fx-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value };
             await op(id ? 'updateFixed' : 'addFixed', { id, data });
             closeModal();
         }
 
         async function submitTerm() {
             const id = document.getElementById('t-id').value;
-            const data = { name: document.getElementById('x-tr-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
+            const data = { name: document.getElementById('tr-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
             await op(id ? 'updateTerm' : 'addTerm', { id, data });
             closeModal();
         }
