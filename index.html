@@ -7,21 +7,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #007AFF; }
-        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; transition: opacity 0.3s; }
+        :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #007AFF; --ios-red: #FF3B30; }
+        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; }
         .ios-card { background: var(--ios-card); border-radius: 14px; overflow: hidden; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         .bottom-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #1c1c1e; border-top-left-radius: 20px; border-top-right-radius: 20px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.15, 1, 0.3, 1); z-index: 100; max-height: 90vh; overflow-y: auto; }
         .bottom-sheet.active { transform: translateY(0); }
         .strikethrough { text-decoration: line-through; opacity: 0.3; transform: scale(0.95); transition: 0.5s; }
-        
-        /* Swipe styles */
-        .swipe-item { position: relative; touch-action: pan-y; overflow: hidden; border-radius: 14px; margin-bottom: 8px; }
-        .swipe-content { position: relative; z-index: 2; transition: transform 0.3s; background: var(--ios-card); }
-        .swipe-bg { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; align-items: center; px: 20px; font-weight: bold; }
-        .bg-undo { background: var(--ios-blue); color: white; justify-content: flex-start; padding-left: 20px; }
-        .bg-delete { background: #ff3b30; color: white; justify-content: flex-end; padding-right: 20px; }
+        input, select { background: #2c2c2e !important; border: none; color: white; border-radius: 12px; padding: 16px; width: 100%; outline: none; }
     </style>
 </head>
 <body class="safe-top">
@@ -29,18 +23,17 @@
     <header class="p-6 sticky top-0 bg-black/80 backdrop-blur-xl z-40 flex justify-between items-center">
         <h1 id="view-title" class="text-3xl font-bold">August</h1>
         <div id="plus-btn" class="hidden">
-            <button onclick="openModal()" class="text-blue-500 text-2xl"><i class="fa-solid fa-plus"></i></button>
+            <button onclick="openEntryModal()" class="text-blue-500 text-2xl"><i class="fa-solid fa-plus"></i></button>
         </div>
     </header>
 
-    <main id="app" class="px-4 pb-32">
+    <main class="px-4 pb-32">
         <div id="view-action" class="tab-content active space-y-3"></div>
         <div id="view-terms" class="tab-content space-y-4"></div>
         <div id="view-fixed" class="tab-content space-y-2"></div>
-        <div id="view-history" class="tab-content"></div>
+        <div id="view-history" class="tab-content space-y-3"></div>
     </main>
 
-    <!-- Bottom Navigation -->
     <nav class="fixed bottom-0 w-full bg-[#161618]/90 backdrop-blur-xl border-t border-white/10 pb-8 pt-3 z-50">
         <div class="flex justify-around">
             <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt text-xl"></i><span class="text-[10px] mt-1">Action</span></button>
@@ -50,41 +43,44 @@
         </div>
     </nav>
 
-    <!-- Modal Sheets -->
+    <!-- Modal for Fixed -->
     <div id="sheet-fixed" class="bottom-sheet p-6">
+        <input type="hidden" id="f-id">
         <div class="flex justify-between items-center mb-6">
             <button onclick="closeModal()" class="text-blue-500">Cancel</button>
-            <span class="font-bold">Fixed Bill</span>
+            <span class="font-bold">Fixed</span>
             <button onclick="submitFixed()" class="text-blue-500 font-bold">Save</button>
         </div>
         <div class="space-y-4">
-            <input type="text" id="f-name" placeholder="Expense Name" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-            <input type="number" id="f-amount" placeholder="Amount" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-            <select id="f-freq" onchange="toggleDateUI()" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none"><option>Monthly</option><option>Weekly</option></select>
+            <input type="text" id="f-name" placeholder="Expense">
+            <input type="number" id="f-amount" placeholder="Amount">
+            <select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select>
             <div id="f-date-container"></div>
-            <input type="text" id="f-note" placeholder="Note" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <input type="text" id="f-note" placeholder="Note">
         </div>
     </div>
 
+    <!-- Modal for Terms -->
     <div id="sheet-terms" class="bottom-sheet p-6">
+        <input type="hidden" id="t-id">
         <div class="flex justify-between items-center mb-6">
             <button onclick="closeModal()" class="text-blue-500">Cancel</button>
-            <span class="font-bold">New Term</span>
+            <span class="font-bold">Term Bill</span>
             <button onclick="submitTerm()" class="text-blue-500 font-bold">Save</button>
         </div>
         <div class="space-y-4">
-            <input type="text" id="t-name" placeholder="Expense Name" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
-            <input type="number" id="t-balance" placeholder="Starting Balance" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <input type="text" id="t-name" placeholder="Expense">
+            <input type="number" id="t-balance" placeholder="Starting Balance">
             <div class="grid grid-cols-2 gap-3">
-                <input type="date" id="t-start" class="bg-[#2c2c2e] p-4 rounded-xl outline-none">
-                <input type="number" id="t-day" placeholder="Due Day" class="bg-[#2c2c2e] p-4 rounded-xl outline-none">
+                <input type="date" id="t-start">
+                <input type="number" id="t-day" placeholder="Due Day">
             </div>
-            <input type="number" id="t-amount" placeholder="Payment Amount" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">
+            <input type="number" id="t-amount" placeholder="Payment Amount">
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxJcbFW4sdWpCwDvmDmeDRn4krp5_qLVutC_Ui46RdcTmeT-NTaJ47STkG9xaU50beGkw/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbwwfFvCNp75C0bAcSznb7m_rb7fJfaPmXqOhZ61ZygWWh_FO-Xtb5swFeGm9CkxI9uPVA/exec"; 
         let db = { action: [], terms: [], fixed: [], history: [] };
         let activeTab = 'action';
 
@@ -111,91 +107,129 @@
                         </button>
                         <div>
                             <p class="font-bold text-lg">${item.Name}</p>
-                            <p class="text-xs text-gray-500 italic">Due: ${item.DueDate}</p>
+                            <p class="text-xs text-gray-500">Due: ${item.DueDate}</p>
                         </div>
                     </div>
                     <p class="text-xl font-medium">${Number(item.Amount).toLocaleString()}</p>
                 </div>
-            `).join('') || '<p class="text-center text-gray-600 py-10">Clear!</p>';
+            `).join('') || '<p class="text-center text-gray-600 py-10">All items paid.</p>';
         }
 
         async function markPaid(id) {
             const el = document.getElementById(`item-${id}`);
             el.classList.add('strikethrough');
             el.querySelector('.inner-check').style.background = '#34C759';
-            
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'completeAction', id: id }) });
             setTimeout(refreshData, 600);
         }
 
         function renderTerms() {
             const container = document.getElementById('view-terms');
-            container.innerHTML = db.terms.map(t => {
-                const remTerm = Math.ceil(t.RemainingBalance / t.PaymentAmount);
-                return `
-                <div class="ios-card p-5 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <h2 class="text-xl font-bold">${t.Name}</h2>
-                        <span class="text-blue-500 font-bold text-xs uppercase">${t.Frequency}</span>
+            container.innerHTML = db.terms.map(t => `
+                <div class="ios-card p-5">
+                    <div class="flex justify-between items-start mb-4">
+                        <div><h2 class="text-xl font-bold">${t.Name}</h2><p class="text-xs text-gray-500 uppercase">${t.Frequency}</p></div>
+                        <div class="flex space-x-4">
+                            <button onclick="editMaster('terms', '${t.ID}')" class="text-blue-500"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="confirmDeleteMaster('Terms', '${t.ID}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
                         <div class="bg-white/5 p-3 rounded-xl"><p class="text-[10px] text-gray-500 uppercase">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
-                        <div class="bg-white/5 p-3 rounded-xl col-span-2 text-center"><p class="text-[10px] text-gray-500 uppercase">Remaining Terms</p><p class="text-lg font-bold">${remTerm} Months</p></div>
                     </div>
-                </div>`;
-            }).join('');
+                </div>`).join('');
         }
 
         function renderFixed() {
             const container = document.getElementById('view-fixed');
             container.innerHTML = db.fixed.map(f => `
-                <div class="flex justify-between items-center py-4 border-b border-white/5">
-                    <div><p class="font-bold">${f.Name}</p><p class="text-xs text-gray-500">${f.Frequency} • ${f.DueDay}</p></div>
-                    <p class="font-semibold text-lg">${Number(f.Amount).toLocaleString()}</p>
-                </div>
-            `).join('');
+                <div class="ios-card p-4 flex justify-between items-center mb-2">
+                    <div><p class="font-bold text-lg">${f.Name}</p><p class="text-xs text-gray-500">${f.Frequency} • Day ${f.DueDay}</p></div>
+                    <div class="flex items-center space-x-6">
+                        <p class="font-semibold text-lg">${Number(f.Amount).toLocaleString()}</p>
+                        <div class="flex space-x-3">
+                            <button onclick="editMaster('fixed', '${f.ID}')" class="text-blue-500"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="confirmDeleteMaster('Fixed', '${f.ID}')" class="text-red-500"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </div>
+                </div>`).join('');
         }
 
         function renderHistory() {
             const container = document.getElementById('view-history');
             container.innerHTML = db.history.map(h => `
-                <div class="swipe-item" ontouchstart="startSwipe(event)" ontouchend="endSwipe(event, '${h.ID}')">
-                    <div class="swipe-bg bg-undo">Mark Unpaid</div>
-                    <div class="swipe-bg bg-delete">Delete</div>
-                    <div class="swipe-content p-4 flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <i class="fa-solid fa-circle-check text-blue-500"></i>
-                            <div><p class="text-gray-400 font-bold">${h.Name}</p><p class="text-[10px] text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
-                        </div>
-                        <p class="text-gray-500 font-bold">${Number(h.Amount).toLocaleString()}</p>
+                <div class="ios-card p-4 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-check text-blue-500"></i>
+                        <div><p class="text-gray-400 font-bold">${h.Name}</p><p class="text-[10px] text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
                     </div>
-                </div>
-            `).join('');
+                    <div class="flex items-center space-x-4">
+                        <p class="text-gray-500 font-bold mr-2">${Number(h.Amount).toLocaleString()}</p>
+                        <button onclick="confirmHistoryAction('undoHistory', '${h.ID}')" class="bg-blue-600/20 text-blue-500 px-3 py-1 rounded-full text-[10px] font-bold">UNPAID</button>
+                        <button onclick="confirmHistoryAction('deleteHistory', '${h.ID}')" class="text-red-500 px-2"><i class="fa-solid fa-trash-can"></i></button>
+                    </div>
+                </div>`).join('');
         }
 
-        // Swipe Logic
-        let touchStart = 0;
-        function startSwipe(e) { touchStart = e.touches[0].clientX; }
-        async function endSwipe(e, id) {
-            const diff = e.changedTouches[0].clientX - touchStart;
-            const content = e.currentTarget.querySelector('.swipe-content');
-            if (diff > 100) { 
-                content.style.transform = "translateX(100%)";
-                await callBackend('undoHistory', id);
-            } else if (diff < -100) {
-                if (confirm("Delete this record?")) {
-                    content.style.transform = "translateX(-100%)";
-                    await callBackend('deleteHistory', id);
-                }
+        // MASTER CRUD LOGIC
+        function editMaster(type, id) {
+            const item = db[type].find(i => i.ID === id);
+            openEntryModal(true);
+            if (type === 'fixed') {
+                document.getElementById('f-id').value = id;
+                document.getElementById('f-name').value = item.Name;
+                document.getElementById('f-amount').value = item.Amount;
+                document.getElementById('f-freq').value = item.Frequency;
+                toggleDateUI();
+                document.getElementById('f-day').value = item.DueDay;
+                document.getElementById('f-note').value = item.Note;
+            } else {
+                document.getElementById('t-id').value = id;
+                document.getElementById('t-name').value = item.Name;
+                document.getElementById('t-balance').value = item.RemainingBalance;
+                document.getElementById('t-start').value = new Date(item.StartDate).toISOString().split('T')[0];
+                document.getElementById('t-day').value = item.DueDay;
+                document.getElementById('t-amount').value = item.PaymentAmount;
+            }
+            document.getElementById(`sheet-${type}`).classList.add('active');
+        }
+
+        function confirmDeleteMaster(type, id) {
+            if (confirm(`Are you sure you want to delete this ${type} bill? This will also remove any pending payments in the Action tab.`)) {
+                callBackend('deleteMaster', { type: type, id: id });
             }
         }
 
-        async function callBackend(action, id) {
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, id: id }) });
+        // HISTORY LOGIC
+        function confirmHistoryAction(action, id) {
+            const msg = action === 'deleteHistory' ? "Are you sure you want to delete?" : "Are you sure you want to make this unpaid?";
+            if (confirm(msg)) {
+                callBackend(action, { id: id });
+            }
+        }
+
+        async function callBackend(action, params) {
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, ...params }) });
             refreshData();
         }
 
+        // FORM SUBMISSIONS
+        async function submitFixed() {
+            const id = document.getElementById('f-id').value;
+            const data = { name: document.getElementById('f-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value, note: document.getElementById('f-note').value };
+            await callBackend(id ? 'updateFixed' : 'addFixed', { id: id, data: data });
+            closeModal();
+        }
+
+        async function submitTerm() {
+            const id = document.getElementById('t-id').value;
+            const data = { name: document.getElementById('t-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
+            await callBackend(id ? 'updateTerm' : 'addTerm', { id: id, data: data });
+            closeModal();
+        }
+
+        // UI HELPERS
         function switchTab(tab) {
             activeTab = tab;
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -206,30 +240,26 @@
             document.getElementById('view-title').innerText = tab === 'action' ? 'August' : tab.charAt(0).toUpperCase() + tab.slice(1);
         }
 
-        function openModal() { document.getElementById(`sheet-${activeTab}`).classList.add('active'); toggleDateUI(); }
+        function openEntryModal(isEdit = false) {
+            if (!isEdit) {
+                document.getElementById('f-id').value = ""; document.getElementById('t-id').value = "";
+                document.querySelectorAll('input').forEach(i => i.value = "");
+            }
+            document.getElementById(`sheet-${activeTab}`).classList.add('active');
+            toggleDateUI();
+        }
+
         function closeModal() { document.querySelectorAll('.bottom-sheet').forEach(s => s.classList.remove('active')); }
 
         function toggleDateUI() {
             const freq = document.getElementById('f-freq').value;
             const container = document.getElementById('f-date-container');
             if (freq === 'Monthly') {
-                container.innerHTML = `<select id="f-day" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
+                container.innerHTML = `<select id="f-day">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
             } else {
                 const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                container.innerHTML = `<select id="f-day" class="w-full bg-[#2c2c2e] p-4 rounded-xl outline-none">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
+                container.innerHTML = `<select id="f-day">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
             }
-        }
-
-        async function submitFixed() {
-            const data = { name: document.getElementById('f-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value, note: document.getElementById('f-note').value };
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addFixed', data: data }) });
-            closeModal(); refreshData();
-        }
-
-        async function submitTerm() {
-            const data = { name: document.getElementById('t-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'addTerm', data: data }) });
-            closeModal(); refreshData();
         }
 
         window.onload = refreshData;
