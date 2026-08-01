@@ -3,63 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
-    <title>Budget iOS</title>
+    <title>Budget Pro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #0A84FF; --ios-red: #FF453A; --ios-gray: #8E8E93; }
         
-        /* Native App Feel */
+        /* Disable Zoom & Setup Base */
         body { 
             background: var(--ios-bg); 
             color: #fff; 
-            font-family: -apple-system, system-ui, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            overscroll-behavior-y: contain;
-            touch-action: manipulation; /* Disables double-tap zoom */
+            font-family: -apple-system, system-ui, sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            touch-action: manipulation; 
             user-select: none;
-            -webkit-user-select: none;
+            overflow-x: hidden;
         }
 
         .ios-card { background: var(--ios-card); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        
+
         /* Modern Bottom Sheet */
         .bottom-sheet { 
             position: fixed; bottom: 0; left: 0; right: 0; 
             background: #1c1c1e; border-top-left-radius: 28px; border-top-right-radius: 28px; 
             transform: translateY(105%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
-            z-index: 100; padding: 24px; padding-bottom: calc(60px + env(safe-area-inset-bottom));
-            box-shadow: 0 -15px 50px rgba(0,0,0,0.8);
+            z-index: 100; padding: 24px; padding-bottom: calc(60px + env(safe-area-inset-bottom)); 
+            box-shadow: 0 -15px 50px rgba(0,0,0,0.8); 
         }
         .bottom-sheet.active { transform: translateY(0); }
         .sheet-handle { width: 40px; height: 5px; background: #3a3a3c; border-radius: 10px; margin: -10px auto 25px auto; }
 
-        /* Balanced Centered Inputs */
+        /* Form Inputs - Centered & Proportional */
         .input-group { margin-bottom: 18px; text-align: center; }
         .input-group label { 
             display: block; color: var(--ios-gray); font-size: 11px; 
-            text-transform: uppercase; font-weight: 700; margin-bottom: 8px;
-            letter-spacing: 0.05em;
+            text-transform: uppercase; font-weight: 700; margin-bottom: 8px; 
+            letter-spacing: 0.05em; 
         }
         input, select { 
             background: #2c2c2e !important; border: none; color: white; 
-            border-radius: 16px; width: 100%; outline: none;
-            font-size: 17px; height: 58px; text-align: center !important; /* Centered Text */
-            appearance: none; -webkit-appearance: none;
+            border-radius: 16px; width: 100%; outline: none; 
+            font-size: 17px; height: 58px; text-align: center !important; 
         }
         input::placeholder { color: #636366; text-align: center; }
-
-        /* Prevent Auto-fill Background */
+        
+        /* Remove Auto-fill recognition */
         input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #2c2c2e inset !important; -webkit-text-fill-color: white !important; }
 
         .strikethrough { opacity: 0.1; filter: grayscale(1); transform: scale(0.98); pointer-events: none; transition: 0.6s; }
         
         .icon-btn { color: var(--ios-gray); transition: all 0.2s; cursor: pointer; }
         .icon-btn:active { transform: scale(0.85); opacity: 0.6; }
-
-        #dashboard-tiles { transition: opacity 0.3s ease; }
     </style>
 </head>
 <body class="safe-top overflow-x-hidden">
@@ -69,6 +65,7 @@
         <i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
     </div>
 
+    <!-- Header Section -->
     <header class="px-6 pt-6 pb-2 sticky top-0 bg-black/90 backdrop-blur-xl z-40">
         <div class="flex justify-between items-center mb-4">
             <h1 id="view-title" class="text-3xl font-bold tracking-tight">August</h1>
@@ -79,48 +76,61 @@
             </div>
         </div>
         
-        <!-- Bento Dashboard (Action Tab Only) -->
+        <!-- Bento Dashboard (Only visible on Action Tab) -->
         <div id="dashboard-tiles" class="grid grid-cols-2 gap-3 mb-4">
             <div class="ios-card p-4">
-                <p id="tile-1-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 1/2 DUE:</p>
+                <p id="tile-1-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">DUE 1/2:</p>
                 <p id="tile-1-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
-            <div class="ios-card p-4">
-                <p id="tile-2-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 2/2 DUE:</p>
+            <div class="ios-card p-4 border-l-2 border-blue-500/20">
+                <p id="tile-2-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">DUE 2/2:</p>
                 <p id="tile-2-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
         </div>
     </header>
 
-    <main id="main-scroll" class="px-4 pb-36">
+    <!-- Main Content Views -->
+    <main class="px-4 pb-36">
         <div id="view-action" class="tab-content active space-y-3"></div>
         <div id="view-terms" class="tab-content space-y-4"></div>
         <div id="view-fixed" class="tab-content space-y-2"></div>
         <div id="view-history" class="tab-content space-y-2"></div>
     </main>
 
-    <!-- Navigation -->
+    <!-- Bottom Navigation Bar -->
     <nav class="fixed bottom-0 w-full bg-[#161618]/95 backdrop-blur-2xl border-t border-white/5 pb-8 pt-3 z-50">
         <div class="flex justify-around items-center max-w-md mx-auto">
-            <button onclick="switchTab('action')" class="nav-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt-lightning text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Action</span></button>
-            <button onclick="switchTab('terms')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar-days text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Terms</span></button>
-            <button onclick="switchTab('fixed')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Fixed</span></button>
-            <button onclick="switchTab('history')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">History</span></button>
+            <button onclick="switchTab('action')" class="nav-btn text-blue-500 flex flex-col items-center" data-tab="action">
+                <i class="fa-solid fa-bolt-lightning text-xl mb-1"></i>
+                <span class="text-[9px] font-bold uppercase tracking-tighter">Action</span>
+            </button>
+            <button onclick="switchTab('terms')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="terms">
+                <i class="fa-solid fa-calendar-days text-xl mb-1"></i>
+                <span class="text-[9px] font-bold uppercase tracking-tighter">Terms</span>
+            </button>
+            <button onclick="switchTab('fixed')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="fixed">
+                <i class="fa-solid fa-layer-group text-xl mb-1"></i>
+                <span class="text-[9px] font-bold uppercase tracking-tighter">Fixed</span>
+            </button>
+            <button onclick="switchTab('history')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="history">
+                <i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i>
+                <span class="text-[9px] font-bold uppercase tracking-tighter">History</span>
+            </button>
         </div>
     </nav>
 
-    <!-- Fixed Sheet -->
+    <!-- Fixed Entry Modal -->
     <div id="sheet-fixed" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="f-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
+            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
             <span class="font-bold text-lg">Fixed</span>
             <button onclick="submitFixed()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
         <div class="input-group">
             <label>Expense</label>
-            <input type="text" id="fx-name" autocomplete="one-time-code" placeholder="Rent, Internet...">
+            <input type="text" id="x-fx-name" autocomplete="one-time-code" placeholder="Rent, Internet...">
         </div>
         <div class="input-group">
             <label>Amount</label>
@@ -133,31 +143,37 @@
         <div id="f-date-container" class="input-group"></div>
     </div>
 
-    <!-- Terms Sheet -->
+    <!-- Terms Entry Modal -->
     <div id="sheet-terms" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="t-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
+            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
             <span class="font-bold text-lg">Term Bill</span>
             <button onclick="submitTerm()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
         <div class="input-group">
             <label>Expense</label>
-            <input type="text" id="tr-name" autocomplete="one-time-code" placeholder="Loan, Financing...">
+            <input type="text" id="x-tr-name" autocomplete="one-time-code" placeholder="Car, iPhone...">
         </div>
         <div class="grid grid-cols-2 gap-4">
             <div class="input-group"><label>Balance</label><input type="number" id="t-balance" placeholder="0"></div>
             <div class="input-group"><label>Payment</label><input type="number" id="t-amount" placeholder="0"></div>
         </div>
         <div class="grid grid-cols-2 gap-4">
-            <div class="input-group"><label>Start Date</label><input type="date" id="t-start"></div>
-            <div class="input-group"><label>Due Day</label><input type="number" id="t-day" placeholder="1-31"></div>
+            <div class="input-group">
+                <label>Frequency</label>
+                <select id="t-freq"><option>Monthly</option><option>Bi-weekly</option><option>Weekly</option></select>
+            </div>
+            <div class="input-group">
+                <label>Due Day</label>
+                <input type="number" id="t-day" placeholder="1-31">
+            </div>
         </div>
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxrYGY7A9ZvJUh9hiONtwilu7ZDr7Z8ePDYt3RZ0HbmKITm06EpfoO3p4UIQT1syi_6dg/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbyb7gLFckmP9OULVCtvyoGvNRPRR_V55TdiHUbdsu0qY9GcQy7hsdaDcScTmUKveuddUw/exec"; 
         let cache = { action: [], terms: [], fixed: [], history: [] };
         let activeTab = 'action';
         const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
@@ -168,23 +184,23 @@
                 const res = await fetch(API_URL);
                 cache = await res.json();
                 render();
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Fetch error:", e); }
             document.getElementById('loader').style.opacity = "0";
         }
 
         function render() {
             const today = new Date();
-            const curMonth = months[today.getMonth()];
-            
+            const curMonthIdx = today.getMonth();
+            const curMonthName = months[curMonthIdx];
+
+            // Toggle Bento Tiles (Only for Action Tab)
             const dashboard = document.getElementById('dashboard-tiles');
             if (activeTab === 'action') {
                 dashboard.style.display = "grid";
-                dashboard.style.opacity = "1";
-                document.getElementById('view-title').innerText = "August";
-                renderAction(curMonth);
+                document.getElementById('view-title').innerText = "August"; // Hardcoded title as requested
+                renderAction();
             } else {
                 dashboard.style.display = "none";
-                dashboard.style.opacity = "0";
                 document.getElementById('view-title').innerText = activeTab.charAt(0).toUpperCase() + activeTab.slice(1);
             }
 
@@ -193,14 +209,17 @@
             renderHistory();
         }
 
-        function renderAction(m) {
+        function renderAction() {
             const container = document.getElementById('view-action');
             let s1 = 0; let s2 = 0;
 
             container.innerHTML = cache.action.map(item => {
-                const day = parseInt(item.DueDate) || parseInt(item.DueDay) || 0;
+                const d = new Date(item.DueDate);
+                const dayNum = d.getDate();
+                const mName = months[d.getMonth()];
                 const val = parseFloat(item.Amount) || 0;
-                if (day <= 14) s1 += val; else s2 += val;
+                
+                if (dayNum <= 14) s1 += val; else s2 += val;
 
                 return `
                 <div class="ios-card p-4 flex items-center justify-between" id="row-${item.ID}">
@@ -210,15 +229,15 @@
                         </button>
                         <div>
                             <p class="font-bold text-[17px] tracking-tight">${item.Name}</p>
-                            <p class="text-[12px] text-gray-500 font-bold">DUE: ${m} ${day}</p>
+                            <p class="text-[12px] text-gray-500 font-bold uppercase tracking-tighter">DUE: ${mName} ${dayNum}</p>
                         </div>
                     </div>
                     <p class="text-xl font-bold tracking-tight">${val.toLocaleString()}</p>
                 </div>`;
             }).join('') || '<p class="text-center text-gray-600 py-12">No active bills</p>';
 
-            document.getElementById('tile-1-label').innerText = `${m} 1/2 DUE:`;
-            document.getElementById('tile-2-label').innerText = `${m} 2/2 DUE:`;
+            document.getElementById('tile-1-label').innerText = `${months[new Date().getMonth()]} 1/2 DUE:`;
+            document.getElementById('tile-2-label').innerText = `${months[new Date().getMonth()]} 2/2 DUE:`;
             document.getElementById('tile-1-sum').innerText = s1.toLocaleString();
             document.getElementById('tile-2-sum').innerText = s2.toLocaleString();
         }
@@ -257,7 +276,7 @@
                 <div class="ios-card p-4 flex items-center justify-between opacity-60">
                     <div class="flex items-center space-x-4">
                         <i class="fa-solid fa-circle-check text-blue-500 text-lg"></i>
-                        <div><p class="font-bold text-gray-300 tracking-tight">${h.Name}</p><p class="text-[9px] font-bold text-gray-600 uppercase">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
+                        <div><p class="font-bold text-gray-300 tracking-tight">${h.Name}</p><p class="text-[9px] font-bold text-gray-600 uppercase tracking-widest">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
                     </div>
                     <div class="flex items-center space-x-6">
                         <p class="font-bold text-gray-400 tracking-tight">${Number(h.Amount).toLocaleString()}</p>
@@ -272,7 +291,7 @@
             if (action.includes('undoHistory') && !confirm('Revert this to Unpaid?')) return;
             document.getElementById('loader').style.opacity = "1";
             await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action, ...params }) });
-            setTimeout(() => fetchData(true), 800);
+            setTimeout(() => fetchData(true), 1000);
         }
 
         async function markPaid(id) {
@@ -288,9 +307,7 @@
             document.getElementById(`view-${tab}`).classList.add('active');
             document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
             
-            // Re-check visibility of Plus button
             document.getElementById('plus-btn').classList.toggle('hidden', (tab !== 'fixed' && tab !== 'terms'));
-            
             render();
         }
 
@@ -300,7 +317,7 @@
                 document.querySelectorAll('.bottom-sheet input').forEach(i => i.value = "");
             }
             document.getElementById(`sheet-${activeTab}`).classList.add('active');
-            toggleDateUI();
+            if (activeTab === 'fixed') toggleDateUI();
         }
 
         function editMaster(type, id) {
@@ -308,7 +325,7 @@
             openEntryModal(true);
             if (type === 'fixed') {
                 document.getElementById('f-id').value = id;
-                document.getElementById('fx-name').value = item.Name;
+                document.getElementById('x-fx-name').value = item.Name;
                 document.getElementById('f-amount').value = item.Amount;
                 document.getElementById('f-freq').value = item.Frequency;
                 toggleDateUI();
@@ -317,7 +334,7 @@
                 document.getElementById('t-id').value = id;
                 document.getElementById('tr-name').value = item.Name;
                 document.getElementById('t-balance').value = item.RemainingBalance;
-                document.getElementById('t-start').value = new Date(item.StartDate).toISOString().split('T')[0];
+                document.getElementById('t-freq').value = item.Frequency;
                 document.getElementById('t-day').value = item.DueDay;
                 document.getElementById('t-amount').value = item.PaymentAmount;
             }
@@ -337,14 +354,14 @@
 
         async function submitFixed() {
             const id = document.getElementById('f-id').value;
-            const data = { name: document.getElementById('fx-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value };
+            const data = { name: document.getElementById('x-fx-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value };
             await op(id ? 'updateFixed' : 'addFixed', { id, data });
             closeModal();
         }
 
         async function submitTerm() {
             const id = document.getElementById('t-id').value;
-            const data = { name: document.getElementById('tr-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
+            const data = { name: document.getElementById('tr-name').value, balance: document.getElementById('t-balance').value, amount: document.getElementById('t-amount').value, freq: document.getElementById('t-freq').value, dueDay: document.getElementById('t-day').value };
             await op(id ? 'updateTerm' : 'addTerm', { id, data });
             closeModal();
         }
