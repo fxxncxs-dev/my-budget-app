@@ -8,64 +8,85 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
         :root { --ios-bg: #000; --ios-card: #1c1c1e; --ios-blue: #0A84FF; --ios-red: #FF453A; --ios-gray: #8E8E93; }
-        body { background: var(--ios-bg); color: #fff; font-family: -apple-system, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+        
+        /* Mobile-First Base */
+        body { 
+            background: var(--ios-bg); 
+            color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overscroll-behavior-y: contain;
+        }
         
         .ios-card { background: var(--ios-card); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        /* Modernized Bottom Sheet */
+        /* Optimized Bottom Sheet */
         .bottom-sheet { 
             position: fixed; bottom: 0; left: 0; right: 0; 
-            background: #1c1c1e; border-top-left-radius: 24px; border-top-right-radius: 24px; 
-            transform: translateY(100%); transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); 
-            z-index: 100; padding: 24px; padding-bottom: calc(40px + env(safe-area-inset-bottom));
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+            background: #1c1c1e; border-top-left-radius: 28px; border-top-right-radius: 28px; 
+            transform: translateY(105%); transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1); 
+            z-index: 100; padding: 24px; padding-bottom: calc(60px + env(safe-area-inset-bottom));
+            box-shadow: 0 -15px 50px rgba(0,0,0,0.8);
         }
         .bottom-sheet.active { transform: translateY(0); }
-        .sheet-handle { width: 36px; height: 5px; background: #3a3a3c; border-radius: 10px; margin: -10px auto 20px auto; }
+        .sheet-handle { width: 40px; height: 5px; background: #3a3a3c; border-radius: 10px; margin: -10px auto 25px auto; }
 
-        /* Typography & Inputs */
+        /* Balanced Proportional Inputs */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { 
+            display: block; color: var(--ios-gray); font-size: 11px; 
+            text-transform: uppercase; font-weight: 700; margin-bottom: 8px; margin-left: 4px;
+            letter-spacing: 0.05em;
+        }
         input, select { 
             background: #2c2c2e !important; border: none; color: white; 
-            border-radius: 14px; padding: 18px; width: 100%; outline: none;
-            font-size: 17px;
+            border-radius: 16px; padding: 16px 20px; width: 100%; outline: none;
+            font-size: 17px; height: 58px; /* Proportional balanced height */
+            appearance: none; -webkit-appearance: none;
         }
-        label { color: var(--ios-gray); font-size: 12px; text-transform: uppercase; font-weight: 600; margin-left: 4px; }
 
-        .strikethrough { text-decoration: line-through; opacity: 0.2; filter: grayscale(1); transition: 0.6s; }
+        /* Prevent Auto-fill Background */
+        input:-webkit-autofill { -webkit-box-shadow: 0 0 0 1000px #2c2c2e inset !important; -webkit-text-fill-color: white !important; }
+
+        .strikethrough { opacity: 0.1; filter: grayscale(1); transform: scale(0.98); pointer-events: none; transition: 0.4s; }
         
-        /* Modern Minimal Icons */
-        .icon-btn { color: var(--ios-gray); transition: color 0.2s, opacity 0.2s; cursor: pointer; }
-        .icon-btn:active { opacity: 0.5; }
-        .icon-delete:hover { color: var(--ios-red); }
-        .icon-edit:hover { color: var(--ios-blue); }
+        /* Loading Spinner */
+        #loader { transition: opacity 0.3s; pointer-events: none; }
     </style>
 </head>
 <body class="safe-top overflow-x-hidden">
+
+    <!-- Loading Indicator -->
+    <div id="loader" class="fixed top-4 right-6 z-[60] opacity-0">
+        <i class="fa-solid fa-circle-notch fa-spin text-blue-500"></i>
+    </div>
 
     <header class="px-6 pt-6 pb-2 sticky top-0 bg-black/90 backdrop-blur-xl z-40">
         <div class="flex justify-between items-center mb-4">
             <h1 id="view-title" class="text-3xl font-bold tracking-tight">August</h1>
             <div id="plus-btn" class="hidden">
-                <button onclick="openEntryModal()" class="text-blue-500 text-2xl p-2"><i class="fa-solid fa-plus"></i></button>
+                <button onclick="openEntryModal()" class="text-blue-500 text-2xl p-2 active:scale-90 transition-transform">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
             </div>
         </div>
         
-        <!-- Summary Dashboard Tiles -->
-        <div id="dashboard-tiles" class="grid grid-cols-2 gap-3 mb-4 hidden">
+        <!-- Bento Dashboard (Only for Action Tab) -->
+        <div id="dashboard-tiles" class="grid grid-cols-2 gap-3 mb-4">
             <div class="ios-card p-4">
-                <p id="tile-1-label" class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">AUG 1/2 DUE:</p>
-                <p id="tile-1-sum" class="text-2xl font-bold tracking-tighter">0</p>
+                <p id="tile-1-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 1/2:</p>
+                <p id="tile-1-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
-            <div class="ios-card p-4 border-l-2 border-blue-500/30">
-                <p id="tile-2-label" class="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-1">AUG 2/2 DUE:</p>
-                <p id="tile-2-sum" class="text-2xl font-bold tracking-tighter">0</p>
+            <div class="ios-card p-4">
+                <p id="tile-2-label" class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-1">AUG 2/2:</p>
+                <p id="tile-2-sum" class="text-2xl font-bold tracking-tight">0</p>
             </div>
         </div>
     </header>
 
-    <main class="px-4 pb-32">
+    <main id="main-scroll" class="px-4 pb-36">
         <div id="view-action" class="tab-content active space-y-3"></div>
         <div id="view-terms" class="tab-content space-y-4"></div>
         <div id="view-fixed" class="tab-content space-y-2"></div>
@@ -74,241 +95,213 @@
 
     <!-- Bottom Nav -->
     <nav class="fixed bottom-0 w-full bg-[#161618]/95 backdrop-blur-2xl border-t border-white/5 pb-8 pt-3 z-50">
-        <div class="flex justify-around items-center">
-            <button onclick="switchTab('action')" class="tab-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt-lightning text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Action</span></button>
-            <button onclick="switchTab('terms')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar-days text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Terms</span></button>
-            <button onclick="switchTab('fixed')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">Fixed</span></button>
-            <button onclick="switchTab('history')" class="tab-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[10px] font-medium uppercase tracking-widest">History</span></button>
+        <div class="flex justify-around items-center max-w-md mx-auto">
+            <button onclick="switchTab('action')" class="nav-btn text-blue-500 flex flex-col items-center" data-tab="action"><i class="fa-solid fa-bolt-lightning text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Action</span></button>
+            <button onclick="switchTab('terms')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="terms"><i class="fa-solid fa-calendar-days text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Terms</span></button>
+            <button onclick="switchTab('fixed')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="fixed"><i class="fa-solid fa-layer-group text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">Fixed</span></button>
+            <button onclick="switchTab('history')" class="nav-btn text-gray-500 flex flex-col items-center" data-tab="history"><i class="fa-solid fa-clock-rotate-left text-xl mb-1"></i><span class="text-[9px] font-bold uppercase tracking-tighter">History</span></button>
         </div>
     </nav>
 
-    <!-- Fixed Entry Modal -->
+    <!-- Modal for Fixed -->
     <div id="sheet-fixed" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="f-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
-            <span class="font-bold text-lg">Fixed Expense</span>
+            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
+            <span class="font-bold text-lg">Fixed</span>
             <button onclick="submitFixed()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="space-y-5">
-            <div><label>Expense</label><input type="text" id="f-name" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Internet, Rent, etc."></div>
-            <div><label>Amount</label><input type="number" id="f-amount" placeholder="0"></div>
-            <div><label>Frequency</label><select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select></div>
-            <div id="f-date-container"></div>
-            <div><label>Note</label><input type="text" id="f-note" placeholder="Optional"></div>
+        <div class="input-group">
+            <label>Expense</label>
+            <input type="text" id="x-fx-name" name="x-fx-name" autocomplete="one-time-code" placeholder="Rent, Internet...">
         </div>
+        <div class="input-group">
+            <label>Amount</label>
+            <input type="number" id="f-amount" placeholder="0">
+        </div>
+        <div class="input-group">
+            <label>Frequency</label>
+            <select id="f-freq" onchange="toggleDateUI()"><option>Monthly</option><option>Weekly</option></select>
+        </div>
+        <div id="f-date-container" class="input-group"></div>
     </div>
 
-    <!-- Terms Entry Modal -->
+    <!-- Modal for Terms -->
     <div id="sheet-terms" class="bottom-sheet">
         <div class="sheet-handle"></div>
         <input type="hidden" id="t-id">
         <div class="flex justify-between items-center mb-8">
-            <button onclick="closeModal()" class="text-blue-500 text-lg">Cancel</button>
-            <span class="font-bold text-lg">Term Bill</span>
+            <button onclick="closeModal()" class="text-blue-500 text-lg font-medium">Cancel</button>
+            <span class="font-bold text-lg">Term</span>
             <button onclick="submitTerm()" class="text-blue-500 font-bold text-lg">Save</button>
         </div>
-        <div class="space-y-5">
-            <div><label>Expense</label><input type="text" id="t-name" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="Car Loan, iPhone, etc."></div>
-            <div><label>Starting Balance</label><input type="number" id="t-balance" placeholder="0"></div>
-            <div class="grid grid-cols-2 gap-4">
-                <div><label>Start Date</label><input type="date" id="t-start"></div>
-                <div><label>Due Day (1-31)</label><input type="number" id="t-day" placeholder="15"></div>
-            </div>
-            <div><label>Monthly Payment Amount</label><input type="number" id="t-amount" placeholder="0"></div>
+        <div class="input-group">
+            <label>Expense</label>
+            <input type="text" id="x-tr-name" name="x-tr-name" autocomplete="one-time-code" placeholder="Car, iPhone...">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="input-group"><label>Balance</label><input type="number" id="t-balance" placeholder="0"></div>
+            <div class="input-group"><label>Monthly Payment</label><input type="number" id="t-amount" placeholder="0"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="input-group"><label>Start Date</label><input type="date" id="t-start"></div>
+            <div class="input-group"><label>Due Day</label><input type="number" id="t-day" placeholder="1-31"></div>
         </div>
     </div>
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwwfFvCNp75C0bAcSznb7m_rb7fJfaPmXqOhZ61ZygWWh_FO-Xtb5swFeGm9CkxI9uPVA/exec"; 
-        let db = { action: [], terms: [], fixed: [], history: [] };
-        let activeTab = 'action';
+        let cache = { action: [], terms: [], fixed: [], history: [] };
+        const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
-        const monthNames = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
-
-        async function refreshData() {
-            const res = await fetch(API_URL);
-            db = await res.json();
-            render();
+        async function fetchData(force = true) {
+            if (force) document.getElementById('loader').style.opacity = "1";
+            try {
+                const res = await fetch(API_URL);
+                cache = await res.json();
+                render();
+            } catch (e) { console.error(e); }
+            document.getElementById('loader').style.opacity = "0";
         }
 
         function render() {
-            const currentMonth = monthNames[new Date().getMonth()];
-            document.getElementById('view-title').innerText = currentMonth === "AUG" ? "August" : monthNames[new Date().getMonth()]; // User asked for August specifically, dynamic is better
+            const curMonthIdx = new Date().getMonth();
+            const curMonth = months[curMonthIdx];
+            
+            // Bento logic
+            if (document.getElementById('view-action').classList.contains('active')) {
+                document.getElementById('dashboard-tiles').style.display = "grid";
+                document.getElementById('view-title').innerText = "August"; // As requested
+            } else {
+                document.getElementById('dashboard-tiles').style.display = "none";
+            }
 
-            renderAction(currentMonth);
+            renderAction(curMonth);
             renderTerms();
             renderFixed();
             renderHistory();
         }
 
-        function renderAction(month) {
+        function renderAction(m) {
             const container = document.getElementById('view-action');
-            const dashboard = document.getElementById('dashboard-tiles');
-            dashboard.classList.remove('hidden');
+            let s1 = 0; let s2 = 0;
 
-            let sum1 = 0; let sum2 = 0;
-            
-            // Labels for tiles
-            document.getElementById('tile-1-label').innerText = `${month} 1/2 DUE:`;
-            document.getElementById('tile-2-label').innerText = `${month} 2/2 DUE:`;
-
-            container.innerHTML = db.action.map(item => {
-                const day = parseInt(item.DueDate);
-                const amount = parseFloat(item.Amount) || 0;
-                
-                if (day <= 14) sum1 += amount; else sum2 += amount;
+            container.innerHTML = cache.action.map(item => {
+                const day = parseInt(item.DueDate) || 0;
+                const val = parseFloat(item.Amount) || 0;
+                if (day <= 14) s1 += val; else s2 += val;
 
                 return `
-                <div class="ios-card p-4 flex items-center justify-between" id="item-${item.ID}">
+                <div class="ios-card p-4 flex items-center justify-between" id="row-${item.ID}">
                     <div class="flex items-center space-x-4">
                         <button onclick="markPaid('${item.ID}')" class="w-8 h-8 rounded-full border-2 border-gray-700 flex items-center justify-center active:scale-90 transition-transform">
-                            <div class="inner-check w-5 h-5 rounded-full transition-all"></div>
+                            <div class="w-5 h-5 rounded-full bg-transparent"></div>
                         </button>
                         <div>
                             <p class="font-bold text-[17px] tracking-tight">${item.Name}</p>
-                            <p class="text-[13px] text-gray-500 font-medium">DUE: ${month} ${item.DueDate}</p>
+                            <p class="text-[12px] text-gray-500 font-bold">DUE: ${m} ${day}</p>
                         </div>
                     </div>
-                    <p class="text-xl font-bold tracking-tight">${Number(amount).toLocaleString()}</p>
+                    <p class="text-xl font-bold tracking-tight">${val.toLocaleString()}</p>
                 </div>`;
-            }).join('') || '<p class="text-center text-gray-500 py-12">All tasks completed.</p>';
+            }).join('') || '<p class="text-center text-gray-500 py-12">All Clear</p>';
 
-            document.getElementById('tile-1-sum').innerText = sum1.toLocaleString();
-            document.getElementById('tile-2-sum').innerText = sum2.toLocaleString();
+            document.getElementById('tile-1-label').innerText = `${m} 1/2:`;
+            document.getElementById('tile-2-label').innerText = `${m} 2/2:`;
+            document.getElementById('tile-1-sum').innerText = s1.toLocaleString();
+            document.getElementById('tile-2-sum').innerText = s2.toLocaleString();
         }
 
         function renderTerms() {
-            const container = document.getElementById('view-terms');
-            container.innerHTML = db.terms.map(t => `
+            document.getElementById('view-terms').innerHTML = cache.terms.map(t => `
                 <div class="ios-card p-5">
-                    <div class="flex justify-between items-start mb-5">
-                        <div>
-                            <h2 class="text-xl font-bold tracking-tight">${t.Name}</h2>
-                            <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Master Term Plan</p>
-                        </div>
-                        <div class="flex space-x-5 text-gray-400">
-                            <i onclick="editMaster('terms', '${t.ID}')" class="fa-regular fa-pen-to-square text-lg icon-btn icon-edit"></i>
-                            <i onclick="confirmDeleteMaster('Terms', '${t.ID}')" class="fa-regular fa-trash-can text-lg icon-btn icon-delete"></i>
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 class="text-xl font-bold">${t.Name}</h2>
+                        <div class="flex space-x-4 text-gray-500">
+                            <i onclick="editMaster('terms', '${t.ID}')" class="fa-regular fa-pen-to-square text-lg"></i>
+                            <i onclick="op('deleteMaster', {type:'Terms', id:'${t.ID}'})" class="fa-regular fa-trash-can text-lg"></i>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Monthly</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
-                        <div class="bg-white/5 p-4 rounded-2xl"><p class="text-[10px] text-gray-500 font-bold uppercase mb-1">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
+                    <div class="grid grid-cols-2 gap-3 text-center">
+                        <div class="bg-white/5 py-3 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase">Payment</p><p class="text-lg font-bold">${Number(t.PaymentAmount).toLocaleString()}</p></div>
+                        <div class="bg-white/5 py-3 rounded-xl"><p class="text-[9px] text-gray-500 font-bold uppercase">Balance</p><p class="text-lg font-bold">${Number(t.RemainingBalance).toLocaleString()}</p></div>
                     </div>
                 </div>`).join('');
         }
 
         function renderFixed() {
-            const container = document.getElementById('view-fixed');
-            container.innerHTML = db.fixed.map(f => `
+            document.getElementById('view-fixed').innerHTML = cache.fixed.map(f => `
                 <div class="ios-card p-4 flex justify-between items-center mb-2">
-                    <div>
-                        <p class="font-bold text-[17px] tracking-tight">${f.Name}</p>
-                        <p class="text-[11px] text-gray-500 font-bold uppercase tracking-widest">${f.Frequency} • Day ${f.DueDay}</p>
-                    </div>
-                    <div class="flex items-center space-x-6">
-                        <p class="font-bold text-[17px] tracking-tight">${Number(f.Amount).toLocaleString()}</p>
-                        <div class="flex space-x-4 text-gray-400">
-                            <i onclick="editMaster('fixed', '${f.ID}')" class="fa-regular fa-pen-to-square text-lg icon-btn icon-edit"></i>
-                            <i onclick="confirmDeleteMaster('Fixed', '${f.ID}')" class="fa-regular fa-trash-can text-lg icon-btn icon-delete"></i>
-                        </div>
+                    <div><p class="font-bold">${f.Name}</p><p class="text-[10px] text-gray-500 font-bold uppercase">${f.Frequency} • DAY ${f.DueDay}</p></div>
+                    <div class="flex items-center space-x-4">
+                        <p class="font-bold">${Number(f.Amount).toLocaleString()}</p>
+                        <i onclick="editMaster('fixed', '${f.ID}')" class="fa-regular fa-pen-to-square text-gray-500"></i>
+                        <i onclick="op('deleteMaster', {type:'Fixed', id:'${f.ID}'})" class="fa-regular fa-trash-can text-gray-500"></i>
                     </div>
                 </div>`).join('');
         }
 
         function renderHistory() {
-            const container = document.getElementById('view-history');
-            container.innerHTML = db.history.map(h => `
-                <div class="ios-card p-4 flex items-center justify-between opacity-80">
-                    <div class="flex items-center space-x-4">
-                        <i class="fa-solid fa-circle-check text-blue-500 text-xl"></i>
-                        <div>
-                            <p class="text-gray-400 font-semibold tracking-tight">${h.Name}</p>
-                            <p class="text-[11px] text-gray-600 font-bold uppercase tracking-widest">${new Date(h.PaidDate).toLocaleDateString()}</p>
-                        </div>
+            document.getElementById('view-history').innerHTML = cache.history.map(h => `
+                <div class="ios-card p-4 flex items-center justify-between opacity-60">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-check text-blue-500 text-lg"></i>
+                        <div><p class="font-bold text-gray-300">${h.Name}</p><p class="text-[9px] font-bold text-gray-600">${new Date(h.PaidDate).toLocaleDateString()}</p></div>
                     </div>
                     <div class="flex items-center space-x-4">
-                        <p class="text-gray-500 font-bold mr-2 tracking-tight">${Number(h.Amount).toLocaleString()}</p>
-                        <i onclick="confirmHistoryAction('undoHistory', '${h.ID}')" class="fa-solid fa-rotate-left icon-btn text-lg hover:text-blue-500"></i>
-                        <i onclick="confirmHistoryAction('deleteHistory', '${h.ID}')" class="fa-regular fa-trash-can icon-btn text-lg hover:text-red-500"></i>
+                        <p class="font-bold text-gray-400">${Number(h.Amount).toLocaleString()}</p>
+                        <i onclick="op('undoHistory', {id:'${h.ID}'})" class="fa-solid fa-rotate-left text-gray-500"></i>
+                        <i onclick="op('deleteHistory', {id:'${h.ID}'})" class="fa-regular fa-trash-can text-gray-500"></i>
                     </div>
                 </div>`).join('');
         }
 
-        // Logic functions
+        async function op(action, params) {
+            if (action.includes('delete') && !confirm('Confirm Delete?')) return;
+            document.getElementById('loader').style.opacity = "1";
+            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action, ...params }) });
+            fetchData();
+        }
+
         async function markPaid(id) {
-            const el = document.getElementById(`item-${id}`);
-            el.classList.add('strikethrough');
-            el.querySelector('.inner-check').style.background = '#34C759';
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: 'completeAction', id: id }) });
-            setTimeout(refreshData, 600);
+            document.getElementById(`row-${id}`).classList.add('strikethrough');
+            op('completeAction', { id });
         }
 
         function editMaster(type, id) {
-            const item = db[type].find(i => i.ID === id);
+            const item = cache[type].find(i => i.ID === id);
             openEntryModal(true);
             if (type === 'fixed') {
                 document.getElementById('f-id').value = id;
-                document.getElementById('f-name').value = item.Name;
+                document.getElementById('x-fx-name').value = item.Name;
                 document.getElementById('f-amount').value = item.Amount;
                 document.getElementById('f-freq').value = item.Frequency;
                 toggleDateUI();
                 document.getElementById('f-day').value = item.DueDay;
-                document.getElementById('f-note').value = item.Note;
             } else {
                 document.getElementById('t-id').value = id;
-                document.getElementById('t-name').value = item.Name;
+                document.getElementById('x-tr-name').value = item.Name;
                 document.getElementById('t-balance').value = item.RemainingBalance;
                 document.getElementById('t-start').value = new Date(item.StartDate).toISOString().split('T')[0];
                 document.getElementById('t-day').value = item.DueDay;
                 document.getElementById('t-amount').value = item.PaymentAmount;
             }
-            document.getElementById(`sheet-${type}`).classList.add('active');
-        }
-
-        function confirmDeleteMaster(type, id) {
-            if (confirm(`Delete this master ${type} bill? Associated pending items will be removed.`)) {
-                callBackend('deleteMaster', { type: type, id: id });
-            }
-        }
-
-        function confirmHistoryAction(action, id) {
-            const msg = action === 'deleteHistory' ? "Delete this history record?" : "Move this back to unpaid action list?";
-            if (confirm(msg)) callBackend(action, { id: id });
-        }
-
-        async function callBackend(action, params) {
-            await fetch(API_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ action: action, ...params }) });
-            refreshData();
-        }
-
-        async function submitFixed() {
-            const id = document.getElementById('f-id').value;
-            const data = { name: document.getElementById('f-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value, note: document.getElementById('f-note').value };
-            await callBackend(id ? 'updateFixed' : 'addFixed', { id: id, data: data });
-            closeModal();
-        }
-
-        async function submitTerm() {
-            const id = document.getElementById('t-id').value;
-            const data = { name: document.getElementById('t-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
-            await callBackend(id ? 'updateTerm' : 'addTerm', { id: id, data: data });
-            closeModal();
         }
 
         function switchTab(tab) {
             activeTab = tab;
             document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
-            document.getElementById(`view-${tab}`).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-blue-500', 'text-gray-500'));
+            
+            const content = document.getElementById(`view-${tab}`);
+            content.classList.add('active');
             document.querySelector(`[data-tab="${tab}"]`).classList.replace('text-gray-500', 'text-blue-500');
             
-            document.getElementById('plus-btn').classList.toggle('hidden', (tab !== 'fixed' && tab !== 'terms'));
-            document.getElementById('dashboard-tiles').classList.toggle('hidden', tab !== 'action');
+            document.getElementById('plus-btn').classList.toggle('hidden', tab !== 'fixed' && tab !== 'terms');
+            document.getElementById('view-title').innerText = tab === 'action' ? 'August' : tab.charAt(0).toUpperCase() + tab.slice(1);
             
-            refreshData();
+            render(); // Fast switch from cache
         }
 
         function openEntryModal(isEdit = false) {
@@ -328,12 +321,25 @@
             if (freq === 'Monthly') {
                 container.innerHTML = `<label>Due Day</label><select id="f-day">${[...Array(31).keys()].map(i => `<option>${i+1}</option>`).join('')}</select>`;
             } else {
-                const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                container.innerHTML = `<label>Day of Week</label><select id="f-day">${days.map(d => `<option>${d}</option>`).join('')}</select>`;
+                container.innerHTML = `<label>Day</label><select id="f-day">${["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"].map(d => `<option>${d}</option>`).join('')}</select>`;
             }
         }
 
-        window.onload = refreshData;
+        async function submitFixed() {
+            const id = document.getElementById('f-id').value;
+            const data = { name: document.getElementById('x-fx-name').value, amount: document.getElementById('f-amount').value, freq: document.getElementById('f-freq').value, dueDay: document.getElementById('f-day').value };
+            await op(id ? 'updateFixed' : 'addFixed', { id, data });
+            closeModal();
+        }
+
+        async function submitTerm() {
+            const id = document.getElementById('t-id').value;
+            const data = { name: document.getElementById('x-tr-name').value, balance: document.getElementById('t-balance').value, start: document.getElementById('t-start').value, dueDay: document.getElementById('t-day').value, amount: document.getElementById('t-amount').value, freq: 'Monthly' };
+            await op(id ? 'updateTerm' : 'addTerm', { id, data });
+            closeModal();
+        }
+
+        window.onload = () => fetchData(true);
     </script>
 </body>
 </html>
